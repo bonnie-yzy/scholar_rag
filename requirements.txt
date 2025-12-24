@@ -1,0 +1,7 @@
+requests
+pandas
+pyalex
+openai
+python-dotenv
+colorama
+# 如果你需要向量库，以后可以加 chromadb 或 lancedb，目前 MVP 先做内存级 RAG

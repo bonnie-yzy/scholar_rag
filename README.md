@@ -7,7 +7,6 @@ ScholarRAG 是一个针对学术科研场景设计的 RAG (检索增强生成) �
 ```txt
 scholar_rag/
 ├── config/                 # [配置] 系统参数与提示词
-│   ├── settings.yaml       # API 邮箱、模型参数、检索条数配置
 │   └── prompts.yaml        # (预留) RAG 的 Prompt 模板管理
 ├── data/                   # [数据] 数据持久化 (Git Ignore)
 │   ├── cache/              # API 请求缓存
@@ -25,7 +24,6 @@ scholar_rag/
 │   │   └── ranking.py      # (规划中) 基于引文网络的重排序
 │   └── utils/              # >> 工具函数
 │       └── logger.py       # 日志模块
-├── tests/                  # 单元测试
 ├── .env                    # 环境变量 (API Key) - 不要上传到 GitHub
 ├── main.py                 # CLI 启动入口
 ├── requirements.txt        # Python 依赖列表
@@ -42,24 +40,62 @@ pip install -r requirements.txt #在项目根目录下运行
 ```
 
 ## 配置文件
-A. 设置 API Key (.env)
+设置 API Key (.env)
+
 在项目根目录创建一个名为 .env 的文件（无后缀），填入您的 LLM 密钥：
 ```bash
-# .env 文件内容
+OPENAI_API_KEY=sk-
+OPENAI_BASE_URL=https://api.siliconflow.cn/v1/
+LLM_MODEL_NAME=Qwen/Qwen2.5-7B-Instruct
+LLM_TEMPERATURE=0.3
+LLM_MAX_TOKENS=2000
 
-# 方案一：使用 OpenAI
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# --- OpenAlex 配置 ---
+# 【必须】填入真实邮箱，否则接口会被限流
+OPENALEX_EMAIL=""
 
-# 方案二：使用 DeepSeek (推荐，更便宜且适合学术)
-# OPENAI_API_KEY=sk-xxxxxxxx (DeepSeek Key)
-# OPENAI_BASE_URL=https://api.deepseek.com
+# --- RAG 检索配置 ---
+RAG_TOP_K=5
+RAG_CHUNK_SIZE=1000
 ```
+设置.gitignore文件
 
-B. 设置 OpenAlex 邮箱 (config/settings.yaml)
-OpenAlex 要求提供邮箱以进入“礼貌池”（更快的请求速度）。修改 config/settings.yaml：
+在项目根目录创建一个名为.gitignore的文件（无后缀），防止.env中敏感内容上传，防止过大的向量库数据上传
 ```bash
-openalex:
-  email: "your_email@example.com"  # <--- 请替换为您的真实邮箱
+# --- 安全与私密配置 (绝对不要上传) ---
+.env
+.env.local
+config/secrets.yaml
+
+# --- 数据与缓存 (太大了，不要上传) ---
+data/
+data/cache/
+data/vector_store/
+*.parquet
+*.csv
+*.jsonl
+
+# --- Python 编译文件与环境 ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+
+# --- IDE 配置 (个人设置，不要上传) ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# --- 日志文件 ---
+*.log
+logs/
+
+# --- Jupyter Notebook ---
+.ipynb_checkpoints/
 ```
 
 ## 启动命令

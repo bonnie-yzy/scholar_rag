@@ -48,4 +48,7 @@ class ReviewGenerator:
 
         # 3. 生成
         self.logger.info("Sending to LLM...")
-        return self.llm.chat(system_prompt, user_prompt)
+        review = self.llm.chat(system_prompt, user_prompt)
+        if not (review or "").strip():
+            return "LLM 返回空内容，无法生成综述（请检查模型名/配额/提供商状态）。"
+        return review

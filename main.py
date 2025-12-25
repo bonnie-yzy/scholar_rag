@@ -10,13 +10,14 @@ def main():
     parser = argparse.ArgumentParser(description="ScholarRAG: Graph-enhanced Research Assistant")
     parser.add_argument("--query", type=str, required=True, help="Research topic/question")
     parser.add_argument("--use_graph", action="store_true", help="Enable Knowledge Graph expansion")
+    parser.add_argument("--top_k", type=int, default=5, help="Top-K papers to retrieve (default: use RAG_TOP_K from .env)")
     args = parser.parse_args()
 
     logger = setup_logger("Main")
     
     # 检查 API Key
-    if not os.getenv("OPENAI_API_KEY"):
-        logger.error("Please set OPENAI_API_KEY in .env file")
+    if not (os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
+        logger.error("Please set OPENAI_API_KEY or OPENROUTER_API_KEY in .env file")
         return
 
     # 1. 初始化模块
@@ -33,7 +34,11 @@ def main():
             concept_ids = [concept_info['id']] # 可以在这里加入 related concepts
 
     # 3. 检索 (Retrieval)
-    papers = retriever.search(args.query, top_k=5, concept_ids=concept_ids)
+    papers = retriever.search(
+        args.query,
+        top_k=args.top_k,
+        concept_ids=concept_ids,
+    )
     
     if not papers:
         logger.warning("No papers found. Exiting.")

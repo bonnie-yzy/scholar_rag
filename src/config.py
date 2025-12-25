@@ -9,8 +9,14 @@ class Settings:
     OPENALEX_EMAIL = os.getenv("OPENALEX_EMAIL")
 
     # 2. LLM 配置
+    # OpenAI 兼容配置（也可用于 OpenRouter/OpenAI-compatible 服务）
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+
+    # OpenRouter 专用（OpenAI-compatible）
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+    OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    OPENROUTER_APP_NAME = os.getenv("OPENROUTER_APP_NAME", "scholar_rag")
     LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
     
     # 类型转换: 环境变量读出来默认是字符串，这里转为 float/int
@@ -26,8 +32,8 @@ class Settings:
     def validate(cls):
         if not cls.OPENALEX_EMAIL:
             raise ValueError("❌ 缺少配置: 请在 .env 中设置 OPENALEX_EMAIL (用于 API 身份验证)")
-        if not cls.OPENAI_API_KEY:
-            raise ValueError("❌ 缺少配置: 请在 .env 中设置 OPENAI_API_KEY")
+        if not (cls.OPENAI_API_KEY or cls.OPENROUTER_API_KEY):
+            raise ValueError("❌ 缺少配置: 请在 .env 中设置 OPENAI_API_KEY 或 OPENROUTER_API_KEY (OpenAI-compatible)")
 
 # 实例化并验证，确保一启动程序就能发现配置错误
 try:

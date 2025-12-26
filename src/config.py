@@ -12,14 +12,17 @@ class Settings:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
     LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
-    
+    EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "BAAI/bge-m3")
     # 类型转换: 环境变量读出来默认是字符串，这里转为 float/int
     LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
-    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2000"))
-
+    LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "8000"))
+    
     # 3. RAG 配置
-    RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
     RAG_CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "1000"))
+    RAG_CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "100"))
+    EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "32"))
+    RAG_DOWNLOAD_K = int(os.getenv("RAG_DOWNLOAD_K", "20"))
+    RAG_RETRIEVAL_K = int(os.getenv("RAG_RETRIEVAL_K", "15"))
 
     # 验证逻辑
     @classmethod

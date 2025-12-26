@@ -1,0 +1,143 @@
+/* 1. 🌈 彩虹渐变标题动画 */
+@keyframes rainbow-move {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.rainbow-text {
+    font-family: 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    /* 渐变色：蓝 -> 紫 -> 红 -> 橙 */
+    background: linear-gradient(45deg, #4285F4, #9B72CB, #D96570, #F4B400); 
+    background-size: 300% 300%;
+    
+    /* [修复] 添加标准属性以解决兼容性报错 */
+    -webkit-background-clip: text;
+    background-clip: text; 
+    
+    /* 配合使用，确保文字透明透出背景 */
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    animation: rainbow-move 6s ease infinite;
+    margin-bottom: 20px;
+}
+
+/* 2. 🌑 全局主背景 (Main Area) - 极深烟灰 */
+.stApp {
+    background-color: #121316;
+}
+
+/* 3. 🌒 侧边栏背景 (Sidebar) - 稍浅烟灰 */
+section[data-testid="stSidebar"] {
+    background-color: #1E2126;
+    border-right: 1px solid #2E3035;
+}
+
+/* 4. 📝 强制修复文字颜色 (解决看不见字的问题) */
+/* 侧边栏所有文字强制为浅灰 */
+section[data-testid="stSidebar"] h1, 
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] h3, 
+section[data-testid="stSidebar"] label, 
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] div {
+    color: #E0E0E0 !important;
+}
+
+/* 主区域文字 */
+.stMarkdown, h1, h2, h3, p, li {
+    color: #E0E0E0;
+}
+
+/* 5. 🔘 按钮与输入框美化 */
+/* 侧边栏按钮 - 深色背景，浅色文字 */
+section[data-testid="stSidebar"] button {
+    background-color: #2C3038;
+    color: white;
+    border: 1px solid #3E424B;
+    transition: all 0.3s;
+}
+section[data-testid="stSidebar"] button:hover {
+    background-color: #4285F4; /* Gemini Blue Hover */
+    border-color: #4285F4;
+    color: white;
+}
+
+/* 聊天输入框美化 */
+.stChatInput textarea {
+    background-color: #1E2126;
+    color: white;
+    border: 1px solid #3E424B;
+}
+
+/* 6. 💬 聊天气泡优化 */
+/* 用户头像背景 */
+div[data-testid="stChatMessageAvatarUser"] {
+    background-color: #4285F4;
+}
+/* 助手头像背景 */
+div[data-testid="stChatMessageAvatarAssistant"] {
+    background-color: #D96570; /* 这里的红色呼应 Scholar */
+}
+
+/* 7. ✨ 灵感广场卡片 (深色模式) */
+.inspiration-card {
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    background-color: #1E2126; /* 卡片背景 */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    color: #E0E0E0;
+}
+.inspiration-card h3 {
+    color: #4facfe;
+    margin-top: 0;
+}
+
+/* --- 8. 🗑️ 侧边栏历史记录交互优化 (仿 Gemini) --- */
+
+/* 1. 定位侧边栏里的所有水平布局行 (即 col1, col2 组成的那一行) */
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
+    border-radius: 8px;
+    padding: 2px 5px;
+    transition: background-color 0.2s;
+    align-items: center; /* 垂直居中 */
+}
+
+/* 2. 当鼠标悬停在这一行时，给整行加一个深色背景高亮 */
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 3. 默认隐藏删除按钮 (透明度为0) */
+/* 使用 :has() 选择器精准定位包含 🗑️ 的按钮 */
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button:has(div p:contains("🗑️")) {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    border: none; /* 去掉边框，看起来更像纯图标 */
+    background-color: transparent; /* 背景透明 */
+}
+
+/* 4. 当鼠标悬停在这一行时，显示删除按钮 */
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:hover button:has(div p:contains("🗑️")) {
+    opacity: 1;
+}
+
+/* 5. 鼠标悬停在删除按钮上时，显示红色警告色 */
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button:has(div p:contains("🗑️")):hover {
+    background-color: rgba(255, 75, 75, 0.2);
+    color: #ff4b4b;
+}
+
+/* 6. 调整左侧标题按钮的样式，使其填满空间且左对齐 */
+section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
+    text-align: left;
+    border: none;
+    background-color: transparent;
+    padding-left: 0;
+}

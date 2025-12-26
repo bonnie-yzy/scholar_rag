@@ -1,78 +1,66 @@
-# 🚀ScholarRAG：基于知识图谱增强的科研综述助手
+# 🚀 ScholarRAG: Graph-Enhanced Research Assistant
 
-ScholarRAG 是一个针对学术科研场景设计的智能 RAG (检索增强生成) Agent。它不仅仅是一个简单的搜索工具，而是一个具备双阶段检索 (Two-Stage Retrieval)、全链路溯源和多模态认知能力的科研助手。
+**ScholarRAG** 是一个面向科研场景的智能 RAG (Retrieval-Augmented Generation) Agent。它不仅仅是一个简单的文献搜索工具，而是一个集成了 **OpenAlex 广度知识发现**、**知识图谱概念导航**、**本地向量库深度记忆** 以及 **BGE 重排序** 的全链路科研助手。
 
-它利用 OpenAlex 进行广度知识发现，通过 ArXiv 补全全文，构建本地增量式向量知识库 (ChromaDB)，并根据用户的意图（综述、解释、启发）动态调整生成策略，最终输出带有精确引用的高质量回答。
+本项目旨在解决传统 LLM 在科研领域存在的“幻觉”与“引用不实”问题，通过双阶段检索漏斗与思维链 (CoT) 生成，提供可溯源、高可信度的学术回答。
 
-## 🌟核心特性
+---
 
-双阶段检索漏斗：
+## 🌟 核心特性 (Key Features)
 
-- 广度发现 (Wide)：利用 OpenAlex 和 Knowledge Graph 快速锁定 Top-20+ 篇核心文献。
+1.  **双阶段检索漏斗 (Dual-Stage Retrieval Funnel)**:
+    * **Stage 1 (Wide & Rerank)**: 利用 OpenAlex API 快速召回 Top-N 元数据，并引入 **BAAI/bge-reranker-v2-m3** 模型对候选文献进行语义级重排序 (Reranking)，确保相关性。
+    * **Stage 2 (Deep & Vector)**: 自动下载全文 (PDF/ArXiv)，解析清洗后存入本地 **ChromaDB** 向量库，进行切片级语义检索。
 
-- 深度挖掘 (Deep)：自动下载全文 (支持 ArXiv/DOI)，解析并切片入库，进行语义级 Top-15+ 精准召回。
+2.  **图谱增强导航 (Graph-Enhanced Navigation)**:
+    * 利用 OpenAlex 庞大的 Concept Ontology（概念本体），通过 LLM 将自然语言 Query 映射为精确的学术实体 ID。
+    * 实现“指哪打哪”的精准检索，有效解决术语歧义问题。
 
-全链路溯源：拒绝幻觉。生成的每一句话都能溯源到具体的论文标题、年份和 URL 链接。
+3.  **工程化解耦 (Engineered Decoupling)**:
+    * **Prompt 解耦**: 所有 System Prompt (Review/Explain/Expansion) 均抽离为 JSON 配置文件，便于微调且不污染业务代码。
+    * **UI/Logic 分离**: 前端 (Streamlit) 与后端 (RAG Core) 逻辑彻底分离，确保代码的可维护性。
 
-增量式知识库：一次下载，永久复用。自动构建本地向量库，越用越快，越用越懂你。
+4.  **增量式知识库 (Incremental Knowledge Base)**:
+    * 自动维护 `data/vector_store`，对已下载的论文进行哈希去重。一次下载，永久复用，越用越快。
 
-多模式 Agent：
+---
 
-- review: 撰写结构化文献综述。
+## 📂 项目架构 (Project Structure)
 
-- explain: 基于理论解释反直觉现象。
+代码结构：
 
-- inspire: 寻找跨学科（如物理->AI）的灵感迁移。
-
-智能兜底：OpenAlex 没有 PDF？系统自动检测并暴力解析 ArXiv 链接，确保全文获取率。
-
-## 项目结构：
-```txt
+```text
 scholar_rag/
-├── data/                   # [数据持久化] (自动生成，Git Ignore)
-│   ├── cache/              # PDF 文件缓存
-│   │   └── pdfs/           # 下载的论文 (文件名: ID_Title.pdf)
-│   ├── vector_store/       # ChromaDB 本地向量数据库
-│   └── papers_debug.txt    # 检索过程的中间元数据日志
-├── src/                    # [核心源码]
-│   ├── config.py           # 配置加载器 (读取 .env)
-│   ├── core/               # >> 大脑层 (Agent & Generation)
-│   │   ├── llm.py          # LLM 接口 (支持 SiliconFlow/OpenAI)
-│   │   ├── generator.py    # 动态 Prompt 组装与上下文格式化
-│   │   └── prompts.json    # 📝 核心 Prompt 模板库 (Review/Explain/Inspire)
-│   ├── retrieval/          # >> 记忆与感知层
-│   │   ├── base.py         # 接口定义
-│   │   ├── openalex.py     # ✅ 广度检索器 (OpenAlex API + ArXiv 补全)
-│   │   └── vector_store.py # ✅ 深度检索器 (PDF下载 + 解析 + 向量化 + 语义召回)
-│   ├── graph/              # >> 导航层
-│   │   ├── expansion.py    # 基于 Concept Ontology 的查询扩展
-│   │   └── ranking.py      # (预留) 引文网络重排序
-│   └── utils/              # >> 基础设施
-│       └── logger.py       # 日志模块
-├── .env                    # 🔐 核心配置文件 (API Key, TopK, BatchSize)
-├── main.py                 # 🚀 CLI 启动入口 (串联整个 Pipeline)
-├── requirements.txt        # 依赖列表
-└── README.md               # 项目文档
-```
-在 scholar_rag/ 下新增 ui/ 目录，保持与 src/ 核心逻辑的隔离。
-```txt
-scholar_rag/
-├── config/                 # [配置]
-├── data/                   # [数据]
-├── src/                    # [RAG 核心]
-├── .env                    # [环境变量]
-├── main.py                 # [CLI 入口]
-├── requirements.txt        # [依赖]
-├── README.md               # [文档]
-└── ui/                     # [🆕 UI 前端模块]
-    ├── __init__.py
-    ├── app.py              # 🚀 Streamlit 主入口
-    ├── db.py               # 💾 SQLite 数据库管理 (用户/灵感广场)
-    ├── logic.py            # 🧠 RAG 逻辑封装 (缓存/多轮对话处理)
-    └── style.css           # 🎨 自定义 CSS (Gemini 风格)
-```
+├── data/                       # [数据持久化层] (Git Ignore)
+│   ├── cache/pdfs/             # PDF 原文缓存 (命名: ID_Title.pdf)
+│   ├── vector_store/           # ChromaDB 本地向量索引
+│   ├── scholar_ui.db           # SQLite 数据库 (UI 用户数据/历史记录)
+│   └── papers_debug.txt        # 检索/下载过程的详细 Debug 日志
+├── src/                        # [核心源码层]
+│   ├── config.py               # 全局配置加载器 (读取 .env)
+│   ├── core/                   # >> 大脑层 (生成与决策)
+│   │   ├── llm.py              # LLM 服务封装 (支持 OpenAI/SiliconFlow/OpenRouter)
+│   │   ├── generator.py        # RAG 生成器 (上下文组装 + CoT 执行)
+│   │   └── prompts.json        # 📝 [配置] 生成任务的 Prompt 模板库
+│   ├── graph/                  # >> 导航层 (意图理解)
+│   │   ├── expansion.py        # Query -> Concept ID 的映射逻辑 (含打分算法)
+│   │   └── expansion_prompts.json # 📝 [配置] 图谱扩展专用的 Prompt
+│   ├── retrieval/              # >> 记忆与感知层 (检索执行)
+│   │   ├── base.py             # 抽象基类
+│   │   ├── openalex.py         # ✅ 广度检索 + BGE Reranker 重排序
+│   │   └── vector_store.py     # ✅ 深度检索 (PDF下载/清洗/向量化/召回)
+│   └── utils/                  # >> 基础设施
+│       └── logger.py           # 统一日志模块
+├── ui/                         # [交互层] (Web UI)
+│   ├── app.py                  # 🚀 Streamlit 主入口 (路由与页面渲染)
+│   ├── logic.py                # 🧠 UI 业务逻辑 (会话管理/RAG调用封装)
+│   ├── db.py                   # 💾 SQLite ORM (用户/广场数据管理)
+│   └── style.css               # 🎨 自定义样式表
+├── .env                        # 🔐 核心环境配置 (API Keys)
+├── main.py                     # 🚀 CLI 命令行启动入口
+└── requirements.txt            # 依赖列表
 
-## 环境配置 Windows + Conda
+## ⚙ 环境配置 Windows + Conda
 ```bash
 conda create -n scholar_rag python=3.10
 
@@ -89,7 +77,9 @@ pip install -r requirements.txt #在项目根目录下运行
 OPENAI_API_KEY=sk-
 OPENAI_BASE_URL=https://api.siliconflow.cn/v1/
 LLM_MODEL_NAME=Qwen/Qwen2.5-7B-Instruct
+EMBEDDING_MODEL_NAME=BAAI/bge-m3
 LLM_TEMPERATURE=0.3
+# LLM 上下文限制 (Qwen2.5 支持 32k，不要设 2000 那么小)
 LLM_MAX_TOKENS=8000
 
 # --- OpenAlex 配置 ---
@@ -155,6 +145,8 @@ logs/
 ## 启动命令
 本项目通过命令行接口 (CLI) 运行。
 
+注意：首次运行 Reranker 需要较大内存及网络带宽。
+
 1. 基础模式 (关键词检索)
 直接使用关键词在 OpenAlex 中检索并生成综述：
 ```bash
@@ -180,65 +172,162 @@ streamlit run ui/app.py
 
 ## 🧩 模块功能详解
 
-1. src/retrieval/openalex.py (广度发现)
+1. 导航层 src/graph/
+    - expansion.py: 系统的“罗盘”。
 
-    功能：负责“大海捞针”。从 2.5 亿篇论文中锁定最相关的 Top-K 元数据。
+        - Concept Mapping: 调用 LLM 将模糊的用户 Query 转换为 OpenAlex 标准学术概念（例如：将 "AI drawing" 映射为 "Generative Art"）。
 
-    核心逻辑：
+        - Scoring Algorithm: 引入打分机制（名称匹配度 + 引用热度 - 层级惩罚），从候选概念中选出最优 Concept ID。
 
-    - 智能回退：优先获取 OpenAlex 官方 PDF 链接；如果没有，自动解析 ids 字段，暴力构造 ArXiv PDF 链接。
+        - Config Loader: 动态加载 expansion_prompts.json，实现 Prompt 与代码分离。
 
-    - 倒排索引还原：将 OpenAlex 的 Inverted Index 重构为可读摘要。
+2. 检索层 src/retrieval/
+    - openalex.py (Stage 1: Broad Search):
 
-2. src/retrieval/vector_store.py (深度记忆)
+        - Search Execution: 接收 Query 或 Concept ID，调用 OpenAlex API 获取 Top-K 元数据。
 
-    功能：负责“细嚼慢咽”。构建本地专属的向量知识库。
+        - BGE Reranking: 关键特性。懒加载 BAAI/bge-reranker-v2-m3 模型，对召回的初步结果进行语义重排序，大幅提升 Top-N 的准确率。
 
-    核心逻辑：
+        - Fallback Logic: 若 Concept 检索为空，自动降级为文本关键词检索。
 
-    - 增量更新：自动检测论文是否已存在，跳过重复下载，越用越快。
+    - vector_store.py (Stage 2: Deep Search):
 
-    - 自动分批：实现了 SiliconFlowEmbeddingFunction 的自动 Batching，解决 API 长度限制 (Error 413)。
+        - Anti-Crawler Fetcher: 内置伪造 User-Agent 和异步下载器 (aiohttp)，针对 IEEE/ScienceDirect/ArXiv 优化下载成功率。
 
-    - 全字段存储：存入 ChromaDB 的不仅是向量，还包含 Title, URL, Year，确保生成时可引用。
+        - Vectorization: 使用 SiliconFlow 或 OpenAI Embedding API，并实现了 自动 Batching 机制，防止 API 报 413 Payload Too Large 错误。
 
-3. src/core/generator.py (大脑中枢)
+        - Traceability: 存入向量库的不仅是 Chunk 文本，还包含 Title, URL, Year 等元数据，确保生成时可精准引用。
 
-    功能：负责“思考与表达”。
+3. 核心层 src/core/
+    - generator.py:
 
-    核心逻辑：
+        - Context Formatting: 将检索到的 Chunks 格式化为 [Source ID] 结构。
 
-    - 动态 Prompt：加载 prompts.json，根据用户选择的 Mode (review/explain/inspire) 切换不同的 思维链 (CoT) 模板。
+        - Dynamic Prompting: 根据 prompts.json 中的任务类型 (Review/Explain/Inspire)，动态切换思维链 (CoT) 策略。
 
-    - 精准引用：将检索到的上下文格式化为 [Source X] Title... URL... 格式，强制 LLM 进行基于事实的回答。
+4. 交互层 ui/
+    - logic.py:
+        - State Management: 桥接 Streamlit 的 st.session_state 与 RAG 后端。
 
-4. ui
+        - Recursive Summarization: 实现了多轮对话的摘要算法，防止 Context 长度爆炸。
 
-- app.py: 入口,前端主程序。负责页面路由（对话/广场/个人）、状态管理（SessionState）、侧边栏逻辑以及组件渲染。
+    - db.py:
 
-- logic.py: 逻辑,后端业务层。封装了 RAG 核心链路（OpenAlex检索 -> 向量入库 -> LLM生成）。核心亮点是实现了 recursive_summarize（递归摘要算法），自动维护长对话的记忆。
+        - 使用 SQLite 管理用户系统和“灵感广场”数据，支持轻量级的用户隔离。
 
-- db.py: 存储,数据持久层 (SQLite)。管理用户账户、私人对话历史（CRUD）、灵感广场帖子及点赞数据。
 
-- style.css: 样式,全局样式表。强制开启深色模式，实现了“彩虹动态标题”和仿 Gemini 的侧边栏交互（鼠标悬停显示删除按钮）。
+## 📝 开发计划 (Roadmap) & 融合架构升级
 
-## 📝 开发计划 (Roadmap)
-[x] MVP: 全链路跑通 (OpenAlex -> ChromaDB -> LLM)。
+本项目正在从单纯的 RAG 工具向 **"数据挖掘层 Agent"** 演进。我们正在引入图算法与推荐系统，打造“千人千面”的科研助手。
 
-[x] Enhancement: 支持 ArXiv 自动补全与 PDF 下载。
+### ✅ 已完成特性 (Phase 1: Baseline)
+- [x] **MVP 全链路**: OpenAlex -> ChromaDB -> LLM (RAG 闭环)。
+- [x] **Deep Retrieval**: 支持 ArXiv 自动补全与 PDF 全文下载/向量化。
+- [x] **Stability**: 解决 Embedding API 批处理限制 (Batching) 与并发问题。
+- [x] **Agentic Core**: 引入多模式 (Review/Explain/Inspire) 与思维链 (CoT) 机制。
+- [x] **Web UI**: 基于 Streamlit 的可视化交互界面。
 
-[x] Stability: 解决 Embedding API 批处理限制 (Batching)。
+### 🚀 正在进行 (Phase 2: Graph & Mining) - 当前开发重点
 
-[x] Agentic: 引入多模式 (Review/Explain/Inspire) 与思维链。
+```txt
+scolar_rag/
+├── src/
+│   ├── mining/                 # ✨ [NEW] 数据挖掘算法层 (纯逻辑)
+│   │   ├── __init__.py
+│   │   ├── graph_ranking.py    # 存放 PageRank, Louvain
+│   │   ├── social_network.py   # 存放 Centrality, NetworkX 构建
+│   │   └── recommendation.py   # 存放 协同过滤, 用户画像计算
+```
 
-[ ] Citation Graph: 引入 PageRank 算法，根据引用影响力重排序检索结果。
+#### Track 1: 图挖掘增强 RAG (Graph-Enhanced RAG)
+> **负责人**: 【周晓】 | **核心算法**: PageRank, Louvain
+- [ ] **Citation Graph Re-ranking (引文重排序)**:
+    - [ ] 构建检索 Top-N 结果的局部引文子图 (Citation Subgraph)。
+    - [ ] 运行 **PageRank** 算法计算论文权威度。
+    - [ ] 实现混合排序策略: $Score = \alpha \cdot VectorSim + \beta \cdot PageRank$。
+- [ ] **Structured Review (结构化综述)**:
+    - [ ] 利用 **Louvain/Leiden** 算法对检索到的文献进行社区检测 (Community Detection)。
+    - [ ] 自动识别“流派” (e.g., 流派 A vs 流派 B)，并在 Prompt 中指导 LLM 分类总结。
 
-[ ] Web UI: 基于 Streamlit/Gradio 的可视化交互界面。
+```cite
+新文件: src/mining/graph_ranking.py (定义 calculate_pagerank 函数) 
 
-## ⚠️ 常见问题
+⚠️ 修改老文件 src/retrieval/openalex.py:
 
-下载失败 (403/418): IEEE/Springer 等出版商有强力反爬。系统会自动跳过这些论文，优先处理 ArXiv 和 Open Access 论文。日志中会有 ⚠️ Download Failed 提示。
+原逻辑: 搜索 -> BGE Rerank -> 返回结果。
 
-Embedding API Error: 如果遇到 Batch size 错误，请尝试在 .env 中调小 EMBEDDING_BATCH_SIZE。
+新逻辑: 搜索 -> BGE Rerank -> 构建图 & 调用 calculate_pagerank -> 融合分数 -> 返回结果。
+```
 
-速度慢: 第一次运行需要下载 PDF，速度取决于网络。第二次运行相同或相似主题时，会直接利用本地向量库，速度极快。
+#### Track 2: 学术社交网络 (Social Network Analysis)
+> **负责人**: 【贺紫竹】 | **核心算法**: Centrality, Co-authorship
+- [ ] **Scholar Profiling (学者画像)**:
+    - [ ] 基于 OpenAlex Author 字段构建“作者合作网络”。
+    - [ ] 计算 **Degree Centrality** (高产学者) 与 **Betweenness Centrality** (跨界桥梁学者)。
+- [ ] **Knowledge Graph Visualization**:
+    - [ ] 在 Agent 回复末尾生成“该领域关键核心人物图谱”。
+    - [ ] 优化 Prompts，使生成的综述能自动关联关键作者贡献。
+```cite
+新文件: src/mining/social_network.py (定义 build_author_graph 函数)
+
+⚠️ 修改老文件 src/core/generator.py:
+
+原逻辑: 拿到论文 -> 塞进 Prompt -> 生成综述。
+
+新逻辑: 拿到论文 -> 调用 build_author_graph 找大佬 -> 把大佬名单拼接到 Prompt 结尾 -> 生成综述。
+```
+#### Track 3: 灵感广场推荐系统 (RecSys for Inspiration)
+> **负责人**: 【杨子怡】 | **核心算法**: Collaborative Filtering, User Profiling
+- [ ] **Personalized RAG (个性化检索)**:
+    - [ ] **User Profiling**: 分析用户历史 Query，维护动态“兴趣向量 (Interest Vector)”。
+    - [ ] **Query Refinement**: 检索时将 User Interest 与当前 Query 融合，实现“千人千面”的搜索结果 (e.g., CV 背景与 NLP 背景搜 "Attention" 结果不同)。
+- [ ] **Community Recommendation (灵感推荐)**:
+    - [ ] **Data Logging**: 记录用户在灵感广场的点赞 (Like) 与收藏行为。
+    - [ ] **Item-Based CF**: 基于物品协同过滤算法，计算帖子/论文的相似度矩阵。
+    - [ ] **Guess You Like**: 在 UI 侧边栏增加“猜你喜欢”模块。
+```cite
+新文件: src/mining/recommendation.py (定义 collaborative_filtering 函数)
+
+⚠️ 修改老文件 ui/db.py:
+
+你需要新建表来存数据（比如 user_likes, user_history），否则推荐算法没米下锅。
+
+⚠️ 修改老文件 ui/app.py:
+
+在 Streamlit 的侧边栏 (st.sidebar) 增加代码，调用推荐函数并显示结果。
+```
+
+## ✅ 下一步行动建议
+建议你们团队按照 “先定义，后调用” 的顺序开发：
+
+### 第一步 (各自定义): 大家都在 src/mining/ 下建立自己的 .py 文件，把算法逻辑写好，写单元测试确保算法能跑通（这时候完全不用碰老文件）。
+
+第二步 (集成联调):
+
+负责 Track 1 的同学去改 src/retrieval/openalex.py。
+
+负责 Track 2 的同学去改 src/core/generator.py。
+
+负责 Track 3 的同学去改 ui/db.py 和 ui/app.py。
+
+这样可以最大程度减少代码冲突 (Merge Conflicts)。
+
+## 🔮 未来规划 (Phase 3: Production)
+- [ ] **Evaluation**: 引入 Ragas 框架对 RAG 生成质量进行自动化评估。
+
+## ⚠️ 常见问题 (FAQ)
+### Q1: 第一次运行时卡在 Loading Reranker 很久？
+
+A: 是的。src/retrieval/openalex.py 会首次下载 BAAI/bge-reranker-v2-m3 模型 (约 1-2GB)。请确保网络通畅。下载完成后，模型会缓存到本地，后续启动将瞬间完成。
+
+### Q2: 为什么有些 PDF 下载失败？
+
+A: 许多出版商 (如 IEEE, Springer, Nature) 具有严格的反爬虫机制或付费墙。vector_store.py 已内置了 ArXiv 优先策略和 Header 伪装，但仍无法保证 100% 下载。下载失败的论文将仅使用其 Abstract 参与生成。
+
+### Q3: 如何清除缓存？
+
+A: 删除 data/vector_store 文件夹可重置向量库；删除 data/cache/pdfs 可清空已下载的 PDF 文件。
+
+### Q4: 代码修改了 prompts.json 不生效？
+
+A: 请确保你修改的是 src/core/prompts.json (用于生成) 或 src/graph/expansion_prompts.json (用于图谱扩展)，且 JSON 格式合法。

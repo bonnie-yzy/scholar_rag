@@ -9,9 +9,25 @@ DB_PATH = "data/scholar_ui.db"
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+    # Update users table to include avatar, bio, theme, font
+    # We use ALTER TABLE to be safe if table exists, or create new with columns
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (username TEXT PRIMARY KEY, password TEXT, created_at TEXT)''')
     
+    # Check if columns exist (sqlite handling for migrations)
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN avatar BLOB")
+    except: pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN bio TEXT")
+    except: pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN theme TEXT")
+    except: pass
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN font TEXT")
+    except: pass
+
     # 私人历史表
     c.execute('''CREATE TABLE IF NOT EXISTS private_chats
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -48,8 +64,8 @@ def register_user(username, password):
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute("INSERT INTO users VALUES (?, ?, ?)", 
-                  (username, hash_pass(password), datetime.now().isoformat()))
+        c.execute("INSERT INTO users (username, password, created_at, theme, font) VALUES (?, ?, ?, ?, ?)", 
+                  (username, hash_pass(password), datetime.now().isoformat(), "Science Geek", "Sans-Serif"))
         conn.commit()
         conn.close()
         return True
@@ -66,6 +82,35 @@ def login_user(username, password):
         return True
     return False
 
+# [NEW] Get User Profile
+def get_user_profile(username):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT bio, theme, font, avatar FROM users WHERE username=?", (username,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return {}
+
+# [NEW] Update User Profile
+def update_user_profile(username, bio=None, theme=None, font=None, avatar_bytes=None):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    if bio is not None:
+        c.execute("UPDATE users SET bio=? WHERE username=?", (bio, username))
+    if theme is not None:
+        c.execute("UPDATE users SET theme=? WHERE username=?", (theme, username))
+    if font is not None:
+        c.execute("UPDATE users SET font=? WHERE username=?", (font, username))
+    if avatar_bytes is not None:
+        c.execute("UPDATE users SET avatar=? WHERE username=?", (avatar_bytes, username))
+        
+    conn.commit()
+    conn.close()
+    
 # [新增] 保存私人历史
 def save_private_chat(username, summary, messages):
     if not messages: return

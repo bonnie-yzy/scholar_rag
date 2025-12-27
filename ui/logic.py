@@ -68,7 +68,7 @@ def recursive_summarize(generator, current_summary, new_messages):
         return current_summary # 失败则返回旧的，防止丢失
 
 
-def process_query(query, mode, use_graph, history_context_str):
+def process_query(query, mode, use_graph, history_context_str, language="Chinese"):
     """
     注意：现在的 process_query 不再负责维护历史，它只负责回答当前问题。
     历史维护逻辑上移到 app.py 中。
@@ -108,6 +108,6 @@ def process_query(query, mode, use_graph, history_context_str):
     {query}
     """
     
-    response = generator.generate(augmented_query, chunks, task_type=mode)
+    response = generator.generate(augmented_query, chunks, task_type=mode, language=language)
     
     return response, papers

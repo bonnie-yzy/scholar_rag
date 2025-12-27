@@ -59,6 +59,7 @@ scholar_rag/
 ├── .env                        # 🔐 核心环境配置 (API Keys)
 ├── main.py                     # 🚀 CLI 命令行启动入口
 └── requirements.txt            # 依赖列表
+```
 
 ## ⚙ 环境配置 Windows + Conda
 ```bash

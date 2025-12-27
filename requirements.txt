@@ -9,5 +9,5 @@ chromadb
 pymupdf 
 sentence-transformers 
 tqdm 
-streamlit
+chainlit
 aiohttp

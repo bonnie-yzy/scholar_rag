@@ -2,11 +2,12 @@
 import streamlit as st
 import time
 import json
+import base64
 from db import (
     init_db, register_user, login_user, share_chat_to_square, 
     get_inspiration_posts, like_post, get_academic_star, 
     save_private_chat, get_private_history_list, save_or_update_chat,
-    delete_shared_chat  # <--- 新增这个
+    delete_shared_chat, get_user_profile, update_user_profile 
 )
 from logic import process_query, get_engine, recursive_summarize
 
@@ -16,21 +17,57 @@ init_db()
 # 页面配置
 st.set_page_config(page_title="ScholarRAG", page_icon="🎓", layout="wide")
 
-# 加载 CSS
-with open("ui/style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# --- Theme & Style Injection ---
+def load_style(theme_key, font_key):
+    # Map friendly names to CSS classes
+    THEME_MAP = {
+        "Nature一作": "theme-nature",
+        "AI天才": "theme-ai",
+        "我想创业": "theme-startup",
+        "理科男": "theme-science",
+        "文艺青年": "theme-artsy"
+    }
+    
+    FONT_MAP = {
+        "Sans-Serif": "'Google Sans', sans-serif",
+        "Serif": "'Georgia', serif",
+        "Monospace": "'Courier New', monospace"
+    }
 
-# --- 状态管理 ---
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "username" not in st.session_state:
-    st.session_state.username = ""
-if "page" not in st.session_state:
-    st.session_state.page = "chat" # chat, square, profile
-if "messages" not in st.session_state:
-    st.session_state.messages = [] # 当前对话历史
-if "chat_history_list" not in st.session_state:
-    st.session_state.chat_history_list = [] # 历史会话列表 (模拟)
+    font_fam = FONT_MAP.get(font_key, "'Google Sans', sans-serif")
+
+    # Read base CSS
+    with open("ui/style.css") as f:
+        base_css = f.read()
+    
+    # --- 修复核心：在这里补上 --input-bg 变量 ---
+    theme_vars = ""
+    if theme_key == "Nature一作":
+        # 🟢 Nature: 增加 --input-bg: #E5E7A2
+        theme_vars = "--bg-color: #EFDBB9; --sidebar-bg: #E5E7A2; --text-color: #947959; --accent-color: #C2C5A4; --input-bg: #E5E7A2;"
+    
+    elif theme_key == "AI天才":
+        theme_vars = "--bg-color: #0d001a; --sidebar-bg: #1a0033; --text-color: #00ffcc; --accent-color: #ff00ff; --input-bg: #1a0033;"
+    
+    elif theme_key == "我想创业":
+        theme_vars = "--bg-color: #ffffff; --sidebar-bg: #f0f4f8; --text-color: #0a192f; --accent-color: #0056b3; --input-bg: #f0f4f8;"
+    
+    elif theme_key == "文艺青年":
+        theme_vars = "--bg-color: #fdfbf7; --sidebar-bg: #f2e6d9; --text-color: #4a4a4a; --accent-color: #8c7b75; --input-bg: #f2e6d9;"
+    
+    else: # 理科男 (默认)
+        theme_vars = "--bg-color: #121316; --sidebar-bg: #1E2126; --text-color: #E0E0E0; --accent-color: #4285F4; --input-bg: rgba(255, 255, 255, 0.05);"
+
+    final_css = f"""
+    <style>
+        {base_css}
+        :root {{
+            {theme_vars}
+            --font-family: {font_fam};
+        }}
+    </style>
+    """
+    st.markdown(final_css, unsafe_allow_html=True)
 
 def init_session():
     if "logged_in" not in st.session_state:
@@ -48,8 +85,31 @@ def init_session():
 
     if "current_chat_id" not in st.session_state:
         st.session_state.current_chat_id = None # None 表示这是个新对话，还没入库
+    
+    if "page" not in st.session_state:
+        st.session_state.page = "chat"
+
+    if "language" not in st.session_state:
+        st.session_state.language = "Chinese"
 
 init_session()
+
+# --- Helper: Render Avatar ---
+def render_avatar(username, avatar_bytes, size=100):
+    if avatar_bytes:
+        b64_img = base64.b64encode(avatar_bytes).decode('utf-8')
+        html = f"""
+        <img src="data:image/png;base64,{b64_img}" class="user-avatar-circle" style="width:{size}px; height:{size}px;">
+        """
+    else:
+        # Default Avatar: White background, Black text initials
+        initial = username[0].upper() if username else "?"
+        html = f"""
+        <div class="default-avatar" style="width:{size}px; height:{size}px;">
+            {initial}
+        </div>
+        """
+    st.markdown(html, unsafe_allow_html=True)
 
 # --- 登录/注册页 ---
 def login_page():
@@ -63,6 +123,11 @@ def login_page():
             if login_user(username, password):
                 st.session_state.logged_in = True
                 st.session_state.username = username
+                # Load Profile Preferences
+                profile = get_user_profile(username)
+                st.session_state.user_theme = profile.get("theme", "理科男")
+                st.session_state.user_font = profile.get("font", "Sans-Serif")
+                
                 st.rerun()
             else:
                 st.error("用户名或密码错误")
@@ -80,7 +145,12 @@ def login_page():
 def sidebar():
     with st.sidebar:
         st.markdown('<div class="rainbow-text">ScholarRAG</div>', unsafe_allow_html=True)
+        # [Update] Display Avatar in Sidebar
+        profile = get_user_profile(st.session_state.username)
+        render_avatar(st.session_state.username, profile.get("avatar"), size=80)
         st.caption(f"🚀 Current User: **{st.session_state.username}**")
+        if profile.get("bio"):
+            st.info(f"📝 {profile['bio']}")
         st.divider()
         
         # [修改] 发起新对话 -> 存入数据库
@@ -138,17 +208,6 @@ def sidebar():
                         st.toast("对话已删除")
                     
                     st.rerun()
-            # 截断一下 summary 防止太长
-            display_title = (item['summary'][:200] + '..') if len(item['summary']) > 200 else item['summary']
-            if st.button(f"📄 {display_title}", key=f"hist_{item['id']}"):
-                st.session_state.messages = item['msgs']
-                # 恢复摘要状态 (为了简单，恢复历史时，默认摘要就是数据库存的那个，指针指向末尾)
-                st.session_state.current_summary = item['summary']
-                st.session_state.last_summarized_idx = len(item['msgs'])
-                # [关键] 加载历史时，必须把 ID 也加载进来，这样继续聊就是在旧记录上追加
-                st.session_state.current_chat_id = item['id']
-                st.session_state.page = "chat"
-                st.rerun()
 
         st.divider()
         st.subheader("🛠️ 功能区")
@@ -212,7 +271,14 @@ def chat_page(mode, use_graph):
             """
             
             # --- [B] 生成回答 ---
-            response, sources = process_query(prompt, mode, use_graph, full_context_str)
+            # [修改] 传入 language 参数
+            response, sources = process_query(
+                prompt, 
+                mode, 
+                use_graph, 
+                full_context_str,
+                language=st.session_state.language  # <--- 从 Session 读取
+            )
             
             # 显示
             placeholder.markdown(response)
@@ -447,16 +513,121 @@ def square_page():
 
 # 个人中心
 def profile_page():
-    # 1. [交互优化] 返回按钮
+    # 1. 返回按钮
     if st.button("⬅️ 返回对话", key="back_from_profile"):
         st.session_state.page = "chat"
         st.rerun()
 
-    st.header("⚙️ 个人中心")
-    st.write(f"当前用户: **{st.session_state.username}**")
-    st.write("个性化设置接口预留位置...")
+    st.title("⚙️ 个人中心")
+    
+    # 获取数据
+    profile = get_user_profile(st.session_state.username)
+    current_bio = profile.get("bio") or ""
+    current_avatar_blob = profile.get("avatar")
+    
+    # --- 布局修改：不再使用 columns，直接垂直排列 ---
+    
+    # 1. 头像区域 (居中显示)
+    st.subheader("头像")
+    # 创建一个居中的容器
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c2: # 在中间列渲染头像
+        render_avatar(st.session_state.username, current_avatar_blob, size=150)
+        st.markdown("<br>", unsafe_allow_html=True) # 加点间距
+        
+        uploaded_file = st.file_uploader("更换头像 (支持 JPG/PNG)", type=['png', 'jpg', 'jpeg'])
+        if uploaded_file is not None:
+            bytes_data = uploaded_file.getvalue()
+            if st.button("保存头像", use_container_width=True):
+                update_user_profile(st.session_state.username, avatar_bytes=bytes_data)
+                st.success("头像已更新")
+                time.sleep(1)
+                st.rerun()
+
+    # 2. 资料区域 (垂直在下方)
+    st.subheader("基本资料")
+    new_bio = st.text_area("个人简介 / Bio", value=current_bio, height=100)
+    
+    # 把保存按钮放在右边，符合操作习惯
+    bc1, bc2 = st.columns([4, 1]) 
+    with bc2:
+        if st.button("保存简介", use_container_width=True):
+            update_user_profile(st.session_state.username, bio=new_bio)
+            st.success("简介已保存")
+            time.sleep(1)
+            st.rerun()
+
     st.divider()
     
+    st.subheader("🎨 主题与外观")
+    # 1. 语言设置
+    st.write("🌐 **界面语言 / Language**")
+    LANG_MAP = {"中文": "Chinese", "英文": "English"}
+    curr_lang_idx = 0 if st.session_state.language in ["中文", "Chinese"] else 1
+    # 使用 horizontal=True 横向排列
+    lang_choice = st.radio(
+        "选择语言", 
+        ["中文", "英文"], 
+        index=curr_lang_idx, 
+        horizontal=True,
+        label_visibility="collapsed" # 隐藏自带的 label，用上面 markdown 写的更好看
+    )
+    if LANG_MAP[lang_choice] != st.session_state.language:
+        st.session_state.language = LANG_MAP[lang_choice]
+        st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True) # 加点间距
+
+    # 2. 主题风格
+    st.write("🌈 **主题风格 / Theme**")
+    THEMES = ["Nature一作", "AI天才", "我想创业", "理科男", "文艺青年"]
+    curr_theme = st.session_state.user_theme
+    try:
+        theme_idx = THEMES.index(curr_theme)
+    except:
+        theme_idx = 3 
+    
+    new_theme = st.radio(
+        "选择主题", 
+        THEMES, 
+        index=theme_idx, 
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 3. 字体选择
+    st.write("🔤 **字体 / Font**")
+    FONTS = ["Sans-Serif", "Serif", "Monospace"]
+    curr_font = st.session_state.user_font
+    try:
+        font_idx = FONTS.index(curr_font)
+    except:
+        font_idx = 0
+        
+    new_font = st.radio(
+        "选择字体", 
+        FONTS, 
+        index=font_idx, 
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Apply Theme Button
+    if new_theme != st.session_state.user_theme or new_font != st.session_state.user_font:
+        if st.button("💾 应用主题设置", type="primary"):
+            update_user_profile(st.session_state.username, theme=new_theme, font=new_font)
+            st.session_state.user_theme = new_theme
+            st.session_state.user_font = new_font
+            st.toast("主题已更新！")
+            time.sleep(1)
+            st.rerun()
+
+    st.divider()
+
     st.subheader("📊 我的数据")
     
     # 2. [严谨逻辑] 从数据库获取真实数据
@@ -489,6 +660,9 @@ def main():
     if not st.session_state.logged_in:
         login_page()
     else:
+        curr_theme = st.session_state.get("user_theme", "理科男")
+        curr_font = st.session_state.get("user_font", "Sans-Serif")
+        load_style(curr_theme, curr_font)
         # 1. 渲染侧边栏 (始终显示)
         mode, use_graph = sidebar()
         

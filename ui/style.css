@@ -1,143 +1,193 @@
-/* 1. 🌈 彩虹渐变标题动画 */
+/* ui/style.css - 终极修复版 (v4) */
+
+/* --- 1. 基础动画与变量定义 --- */
 @keyframes rainbow-move {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-.rainbow-text {
-    font-family: 'Google Sans', 'Helvetica Neue', sans-serif;
-    font-size: 3rem;
-    font-weight: 700;
-    /* 渐变色：蓝 -> 紫 -> 红 -> 橙 */
-    background: linear-gradient(45deg, #4285F4, #9B72CB, #D96570, #F4B400); 
-    background-size: 300% 300%;
-    
-    /* [修复] 添加标准属性以解决兼容性报错 */
-    -webkit-background-clip: text;
-    background-clip: text; 
-    
-    /* 配合使用，确保文字透明透出背景 */
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-
-    animation: rainbow-move 6s ease infinite;
-    margin-bottom: 20px;
+:root {
+    /* 默认变量 (会被 Python 动态注入覆盖) */
+    --bg-color: #fdfbf7;
+    --sidebar-bg: #f2e6d9;
+    --text-color: #4a4a4a;
+    --accent-color: #8c7b75;
+    --input-bg: #f2e6d9;
+    --font-family: 'Google Sans', sans-serif;
 }
 
-/* 2. 🌑 全局主背景 (Main Area) - 极深烟灰 */
+/* --- 2. 核心容器与背景修复 --- */
+
+/* 2.1 全局背景 */
 .stApp {
-    background-color: #121316;
+    background-color: var(--bg-color) !important;
 }
 
-/* 3. 🌒 侧边栏背景 (Sidebar) - 稍浅烟灰 */
+/* 2.2 顶部 Header (彻底去色) */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    border-bottom: none !important;
+}
+
+/* 2.3 底部输入区容器 (彻底修复黑条) */
+/* 这里的关键是把 background 简写属性重置，并覆盖所有层级 */
+div[data-testid="stBottom"] {
+    background: var(--bg-color) !important; 
+    background-color: var(--bg-color) !important;
+    border-top: none !important;
+}
+div[data-testid="stBottom"] > div {
+    background: var(--bg-color) !important; 
+}
+
+/* 2.4 侧边栏 */
 section[data-testid="stSidebar"] {
-    background-color: #1E2126;
-    border-right: 1px solid #2E3035;
+    background-color: var(--sidebar-bg) !important;
+    border-right: 1px solid rgba(128,128,128, 0.1);
 }
 
-/* 4. 📝 强制修复文字颜色 (解决看不见字的问题) */
-/* 侧边栏所有文字强制为浅灰 */
-section[data-testid="stSidebar"] h1, 
-section[data-testid="stSidebar"] h2, 
-section[data-testid="stSidebar"] h3, 
-section[data-testid="stSidebar"] label, 
-section[data-testid="stSidebar"] span,
-section[data-testid="stSidebar"] p,
-section[data-testid="stSidebar"] div {
-    color: #E0E0E0 !important;
+/* 2.5 全局文字 */
+.stMarkdown, h1, h2, h3, h4, h5, h6, p, li, label, span, div, small {
+    color: var(--text-color) !important;
+    font-family: var(--font-family) !important;
 }
 
-/* 主区域文字 */
-.stMarkdown, h1, h2, h3, p, li {
-    color: #E0E0E0;
-}
+/* --- 3. 按钮样式 (自适应主题色 + 加深) --- */
 
-/* 5. 🔘 按钮与输入框美化 */
-/* 侧边栏按钮 - 深色背景，浅色文字 */
-section[data-testid="stSidebar"] button {
-    background-color: #2C3038;
-    color: white;
-    border: 1px solid #3E424B;
-    transition: all 0.3s;
-}
-section[data-testid="stSidebar"] button:hover {
-    background-color: #4285F4; /* Gemini Blue Hover */
-    border-color: #4285F4;
-    color: white;
-}
-
-/* 聊天输入框美化 */
-.stChatInput textarea {
-    background-color: #1E2126;
-    color: white;
-    border: 1px solid #3E424B;
-}
-
-/* 6. 💬 聊天气泡优化 */
-/* 用户头像背景 */
-div[data-testid="stChatMessageAvatarUser"] {
-    background-color: #4285F4;
-}
-/* 助手头像背景 */
-div[data-testid="stChatMessageAvatarAssistant"] {
-    background-color: #D96570; /* 这里的红色呼应 Scholar */
-}
-
-/* 7. ✨ 灵感广场卡片 (深色模式) */
-.inspiration-card {
-    border: 1px solid #333;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 15px;
-    background-color: #1E2126; /* 卡片背景 */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    color: #E0E0E0;
-}
-.inspiration-card h3 {
-    color: #4facfe;
-    margin-top: 0;
-}
-
-/* --- 8. 🗑️ 侧边栏历史记录交互优化 (仿 Gemini) --- */
-
-/* 1. 定位侧边栏里的所有水平布局行 (即 col1, col2 组成的那一行) */
-section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
+/* 3.1 侧边栏按钮 */
+section[data-testid="stSidebar"] .stButton button {
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding-left: 1rem !important;
+    background-color: rgba(0, 0, 0, 0.05) !important; /* 基础加深 */
+    border: 1px solid rgba(0,0,0,0.05) !important;
+    color: var(--text-color) !important;
     border-radius: 8px;
-    padding: 2px 5px;
-    transition: background-color 0.2s;
-    align-items: center; /* 垂直居中 */
+    margin-bottom: 4px;
+}
+section[data-testid="stSidebar"] .stButton button:hover {
+    background-color: var(--accent-color) !important;
+    color: white !important;
 }
 
-/* 2. 当鼠标悬停在这一行时，给整行加一个深色背景高亮 */
-section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+/* 3.2 主区域按钮 (修复黑色按钮问题) */
+/* 包含普通按钮和 Primary 按钮(如保存/登录) */
+.main .stButton button {
+    /* 核心逻辑：使用侧边栏颜色作为基底，然后通过滤镜变暗，实现"加深"效果 */
+    background-color: var(--sidebar-bg) !important; 
+    filter: brightness(0.95); /* 比背景暗 5% */
+    color: var(--text-color) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px;
+    box-shadow: none !important;
+    transition: all 0.2s;
 }
 
-/* 3. 默认隐藏删除按钮 (透明度为0) */
-/* 使用 :has() 选择器精准定位包含 🗑️ 的按钮 */
-section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button:has(div p:contains("🗑️")) {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    border: none; /* 去掉边框，看起来更像纯图标 */
-    background-color: transparent; /* 背景透明 */
+.main .stButton button:hover {
+    /* Hover 时使用强调色 */
+    background-color: var(--accent-color) !important;
+    filter: brightness(1); /* 恢复亮度 */
+    color: white !important;
+    transform: translateY(-1px);
 }
 
-/* 4. 当鼠标悬停在这一行时，显示删除按钮 */
-section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:hover button:has(div p:contains("🗑️")) {
-    opacity: 1;
+/* --- 4. 侧边栏折叠箭头修复 (精准定位) --- */
+
+/* 4.1 隐藏默认的 SVG 图标 */
+button[data-testid="stSidebarCollapseButton"] svg,
+button[data-testid="stSidebarExpandButton"] svg {
+    display: none !important;
 }
 
-/* 5. 鼠标悬停在删除按钮上时，显示红色警告色 */
-section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button:has(div p:contains("🗑️")):hover {
-    background-color: rgba(255, 75, 75, 0.2);
-    color: #ff4b4b;
+/* 4.2 侧边栏展开时 (Sidebar右上角)：显示向左箭头 */
+button[data-testid="stSidebarCollapseButton"]::after {
+    content: "←";  /* 向左箭头 */
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-color) !important;
 }
 
-/* 6. 调整左侧标题按钮的样式，使其填满空间且左对齐 */
-section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
-    text-align: left;
-    border: none;
-    background-color: transparent;
-    padding-left: 0;
+/* 4.3 侧边栏折叠时 (ChatPage左上角)：显示向右箭头或菜单 */
+button[data-testid="stSidebarExpandButton"]::after {
+    content: "→";  /* 向右箭头，提示展开 */
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-color) !important;
 }
+
+/* 确保箭头按钮本身背景透明，去除边框 */
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="stSidebarExpandButton"] {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+
+/* --- 5. 输入框体系美化 --- */
+
+/* Chat 输入框 */
+div[data-testid="stChatInput"] textarea {
+    background-color: rgba(255,255,255,0.3) !important; /* 微微透白，增加层次感 */
+    color: var(--text-color) !important;
+    border: 1px solid rgba(128, 128, 128, 0.3) !important;
+    border-radius: 24px !important;
+}
+/* 去除 ChatInput 外部容器可能存在的背景 */
+div[data-testid="stChatInput"] {
+    background-color: transparent !important;
+}
+
+/* 普通文本框 (Bio, Login) */
+div[data-testid="stTextInput"] input,
+div[data-testid="stTextArea"] textarea {
+    background-color: var(--sidebar-bg) !important; /* 与侧边栏同色 */
+    color: var(--text-color) !important;
+    border: 1px solid rgba(128, 128, 128, 0.2) !important;
+    border-radius: 12px !important;
+}
+
+
+/* --- 6. 其他组件 --- */
+
+/* Radio 按钮 (选项卡) */
+div[row-widget="radio"] div[role="radiogroup"] > label {
+    background-color: var(--sidebar-bg) !important;
+    border: 1px solid rgba(128,128,128,0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    margin-right: 8px;
+}
+div[row-widget="radio"] div[role="radiogroup"] > label[data-checked="true"] {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: transparent;
+}
+div[row-widget="radio"] div[role="radiogroup"] p {
+    font-weight: 500;
+}
+
+/* 文件上传框 */
+div[data-testid="stFileUploader"] section {
+    background-color: var(--sidebar-bg) !important;
+    border: 1px dashed var(--accent-color) !important;
+}
+div[data-testid="stFileUploader"] section span,
+div[data-testid="stFileUploader"] section small {
+    color: var(--text-color) !important;
+}
+
+/* 提示框 (Info/Alert) */
+div[data-testid="stAlert"] {
+    background-color: var(--sidebar-bg) !important;
+    color: var(--text-color) !important;
+    border: none !important;
+}
+div[data-testid="stAlert"] svg {
+    fill: var(--text-color) !important;
+}
+
+/* 强制清除浏览器默认样式 */
+input, textarea, select { color-scheme: normal !important; }

@@ -83,7 +83,7 @@ class ReviewGenerator:
         
         return formatted_text
 
-    def generate(self, user_query: str, context_data: Union[List[str], List[Dict]], task_type: str = "review") -> str:
+    def generate(self, user_query: str, context_data: Union[List[str], List[Dict]], task_type: str = "review",  language: str = "中文") -> str:
         """
         生成回复 (接口保持不变)
         """
@@ -98,10 +98,12 @@ class ReviewGenerator:
         # 2. 格式化上下文
         context_text = self._format_context(context_data)
 
+        lang_instruction = f"\nIMPORTANT: You must output the final response in {language} language."
+
         # 3. 组装 Prompt
         try:
             full_prompt = self.prompts["template"].format(
-                base_system=self.prompts["system_base"],
+                base_system=self.prompts["system_base"] + lang_instruction,
                 instruction=task_config["instruction"],
                 cot=task_config["cot"],
                 context=context_text,

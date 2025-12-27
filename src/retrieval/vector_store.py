@@ -265,23 +265,43 @@ class LocalVectorStore:
             self.logger.info("All papers already indexed. Skipping.")
             return
 
-        try:
-            download_map = asyncio.run(self._download_batch(papers_to_process))
-        except Exception as e:
-            self.logger.error(f"Async loop failed: {e}")
-            return
+        downloadable_papers = [p for p in papers_to_process if p.get('pdf_url')]
+        download_map = {}
+        if downloadable_papers:
+            try:
+                download_map = asyncio.run(self._download_batch(downloadable_papers))
+            except Exception as e:
+                self.logger.error(f"Async loop failed: {e}")
 
         new_count = 0
-        for paper in tqdm(papers_to_process, desc="Parsing & Indexing"):
+        
+        # 3. 混合入库逻辑
+        for paper in tqdm(papers_to_process, desc="Indexing"):
             paper_id = paper['id']
             pdf_path = download_map.get(paper_id)
             
-            if not pdf_path: continue
+            # --- 核心分支逻辑 ---
+            text_content = ""
+            is_full_text = False
+            
+            # 分支 A: 尝试读取 PDF 全文
+            if pdf_path:
+                parsed_text = self._parse_pdf(pdf_path)
+                if parsed_text and len(parsed_text) > 100:
+                    text_content = parsed_text
+                    is_full_text = True
+            
+            # 分支 B: 兜底使用摘要 (如果 PDF 没下下来，或者解析为空)
+            if not text_content:
+                text_content = paper.get('abstract', '')
+                is_full_text = False # 标记为仅摘要
+            
+            # 如果连摘要都没有，那就跳过
+            if not text_content or len(text_content) < 10: 
+                continue
 
-            full_text = self._parse_pdf(pdf_path)
-            if not full_text: continue
-
-            chunks = self._chunk_text(full_text)
+            # 4. 切片与入库
+            chunks = self._chunk_text(text_content)
             if not chunks: continue
 
             ids = [f"{paper_id}_chk_{i}" for i in range(len(chunks))]
@@ -291,7 +311,8 @@ class LocalVectorStore:
                 "url": paper.get('url', ''),
                 "pdf_url": paper.get('pdf_url', ''),
                 "year": paper['year'] or 0,
-                "chunk_index": i
+                "chunk_index": i,
+                "is_full_text": is_full_text  # <--- [新增] 关键标记
             } for i in range(len(chunks))]
 
             self.collection.add(
@@ -302,9 +323,7 @@ class LocalVectorStore:
             new_count += len(chunks)
 
         if new_count > 0:
-            self.logger.info(f"Success: Added {new_count} new chunks to local DB.")
-        else:
-            self.logger.info("No new content added.")
+            self.logger.info(f"Success: Added {new_count} new chunks (Mixed Full/Abstract).")
 
     def search(self, query: str, top_k: int = None):
         if top_k is None:

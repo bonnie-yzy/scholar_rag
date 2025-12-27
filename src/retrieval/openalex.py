@@ -148,6 +148,7 @@ class OpenAlexRetriever(BaseRetriever):
                     pdf_url = arxiv_url.replace("/abs/", "/pdf/")
                     if not pdf_url.endswith(".pdf"): pdf_url += ".pdf"
 
+
             authors = [a.get("author", {}).get("display_name") for a in work.get("authorships", [])]
             
             papers.append({

@@ -227,94 +227,79 @@ streamlit run ui/app.py
 - [x] **Stability**: 解决 Embedding API 批处理限制 (Batching) 与并发问题。
 - [x] **Agentic Core**: 引入多模式 (Review/Explain/Inspire) 与思维链 (CoT) 机制。
 - [x] **Web UI**: 基于 Streamlit 的可视化交互界面。
+- [x] **图挖掘增强 RAG**: Citation Graph Re-ranking (引文重排序), Structured Review (结构化综述)
+- [x] **灵感广场推荐系统**: Personalized RAG (个性化检索), Community Recommendation (灵感推荐)
 
 ### 🚀 正在进行 (Phase 2: Graph & Mining) - 当前开发重点
 
 ```txt
-scolar_rag/
+scholar_rag/
 ├── src/
-│   ├── mining/                 # ✨ [NEW] 数据挖掘算法层 (纯逻辑)
-│   │   ├── __init__.py
-│   │   ├── graph_ranking.py    # 存放 PageRank, Louvain
-│   │   ├── social_network.py   # 存放 Centrality, NetworkX 构建
-│   │   └── recommendation.py   # 存放 协同过滤, 用户画像计算
+│   ├── evaluation/             # ✨ [NEW] 自动化评测层 (Track 2)
+│       ├── __init__.py
+│       └── ragas_checker.py    # Ragas 评测脚本, 测试集生成
+```
+#### Track 2: RAG 性能自动化评测 (Automated Evaluation)
+> 负责人: 【贺紫竹】 | 核心技术: Ragas Framework, LLM-as-a-Judge
+
+📊 第一部分：RAG 核心模式评测 (针对 Generator & Retrieval)
+针对你的三种模式（Review, Explain, Inspire），我们需要关注不同的指标。Ragas 框架非常适合这里。
+
+1. 综述模式 (Mode: Review)
+- 核心目标: 准确、无幻觉、引用规范。
+
+- 关键指标:
+
+    - Faithfulness (忠实度): 生成的综述中的每一句话，是否都能在检索到的 Context 中找到依据？（防止编造文献）。
+
+    - Context Precision (上下文精确度): 检索回来的 Top-N 文献中，真正有用的占比多少？（测试 BGE-Rerank 和 OpenAlex 的效果）。
+
+2. 深度思考模式 (Mode: Explain)
+- 核心目标: 逻辑清晰、回答正确、覆盖面广。
+
+- 关键指标:
+
+    - Answer Correctness (回答正确性): 需要人工或 GPT-4 生成一个标准答案 (Ground Truth)，对比你的 Agent 生成结果的语义相似度。
+
+    - Context Recall (上下文召回率): 标准答案里需要的知识点，检索出的文档里是否都包含了？
+
+3. 头脑风暴模式 (Mode: Inspire)
+- 核心目标: 新颖、相关、有启发性。
+
+- 关键指标:
+
+    - Answer Relevance (回答相关性): 生成的灵感是否真的回应了用户的 Query？
+
+    - Custom Metric (创新性): 这是一个难点。建议使用 LLM-as-a-Judge，写一个专门的 Prompt 让 GPT-4 给“新颖度”打分（1-5分）。
+
+
+⚖️ 第二部分：图检索功能评测 (A/B Testing)
+这是一个控制变量实验。你需要用同一组测试题，分别在 use_graph=True 和 use_graph=False 下运行，然后对比差异。
+
+- 评测逻辑:
+
+    - 准备 20 个带有歧义的 Query（例如 "Apple" - 科技公司 vs 水果，或者 "Transformer" - 变压器 vs 深度学习模型）。
+
+    - 组 A (关闭图谱): 仅依赖 OpenAlex 关键词检索。
+
+    - 组 B (开启图谱): 经过 expansion.py 映射 Concept ID 后检索。
+
+- 胜负标准:
+
+    - Hit Rate (命中率): 正确领域的论文是否出现在 Top-10 中？
+
+    - Noise Rate (噪声率): Top-10 中有多少是不相关的论文？
+```txt
+新文件: src/evaluation/ragas_checker.py (定义 run_evaluation 函数)
+需要用到的接口和旧文件：main.py, generator.py
 ```
 
-#### Track 1: 图挖掘增强 RAG (Graph-Enhanced RAG)
-> **负责人**: 【周晓】 | **核心算法**: PageRank, Louvain
-- [ ] **Citation Graph Re-ranking (引文重排序)**:
-    - [ ] 构建检索 Top-N 结果的局部引文子图 (Citation Subgraph)。
-    - [ ] 运行 **PageRank** 算法计算论文权威度。
-    - [ ] 实现混合排序策略: $Score = \alpha \cdot VectorSim + \beta \cdot PageRank$。
-- [ ] **Structured Review (结构化综述)**:
-    - [ ] 利用 **Louvain/Leiden** 算法对检索到的文献进行社区检测 (Community Detection)。
-    - [ ] 自动识别“流派” (e.g., 流派 A vs 流派 B)，并在 Prompt 中指导 LLM 分类总结。
-
-```cite
-新文件: src/mining/graph_ranking.py (定义 calculate_pagerank 函数) 
-
-⚠️ 修改老文件 src/retrieval/openalex.py:
-
-原逻辑: 搜索 -> BGE Rerank -> 返回结果。
-
-新逻辑: 搜索 -> BGE Rerank -> 构建图 & 调用 calculate_pagerank -> 融合分数 -> 返回结果。
+#### ⚠️ 不修改业务代码，但需要读取数据:
+```txt
+操作逻辑: 不需要修改 app.py 或 generator.py。
+需要编写独立脚本，调用 `src.core.generator` 的接口，
+批量运行 10-20 个 Query，最后输出一个 Excel/JSON 评分报告。
 ```
-
-#### Track 2: 学术社交网络 (Social Network Analysis)
-> **负责人**: 【贺紫竹】 | **核心算法**: Centrality, Co-authorship
-- [ ] **Scholar Profiling (学者画像)**:
-    - [ ] 基于 OpenAlex Author 字段构建“作者合作网络”。
-    - [ ] 计算 **Degree Centrality** (高产学者) 与 **Betweenness Centrality** (跨界桥梁学者)。
-- [ ] **Knowledge Graph Visualization**:
-    - [ ] 在 Agent 回复末尾生成“该领域关键核心人物图谱”。
-    - [ ] 优化 Prompts，使生成的综述能自动关联关键作者贡献。
-```cite
-新文件: src/mining/social_network.py (定义 build_author_graph 函数)
-
-⚠️ 修改老文件 src/core/generator.py:
-
-原逻辑: 拿到论文 -> 塞进 Prompt -> 生成综述。
-
-新逻辑: 拿到论文 -> 调用 build_author_graph 找大佬 -> 把大佬名单拼接到 Prompt 结尾 -> 生成综述。
-```
-#### Track 3: 灵感广场推荐系统 (RecSys for Inspiration)
-> **负责人**: 【杨子怡】 | **核心算法**: Collaborative Filtering, User Profiling
-- [ ] **Personalized RAG (个性化检索)**:
-    - [ ] **User Profiling**: 分析用户历史 Query，维护动态“兴趣向量 (Interest Vector)”。
-    - [ ] **Query Refinement**: 检索时将 User Interest 与当前 Query 融合，实现“千人千面”的搜索结果 (e.g., CV 背景与 NLP 背景搜 "Attention" 结果不同)。
-- [ ] **Community Recommendation (灵感推荐)**:
-    - [ ] **Data Logging**: 记录用户在灵感广场的点赞 (Like) 与收藏行为。
-    - [ ] **Item-Based CF**: 基于物品协同过滤算法，计算帖子/论文的相似度矩阵。
-    - [ ] **Guess You Like**: 在 UI 侧边栏增加“猜你喜欢”模块。
-```cite
-新文件: src/mining/recommendation.py (定义 collaborative_filtering 函数)
-
-⚠️ 修改老文件 ui/db.py:
-
-你需要新建表来存数据（比如 user_likes, user_history），否则推荐算法没米下锅。
-
-⚠️ 修改老文件 ui/app.py:
-
-在 Streamlit 的侧边栏 (st.sidebar) 增加代码，调用推荐函数并显示结果。
-```
-
-## ✅ 下一步行动建议
-建议你们团队按照 “先定义，后调用” 的顺序开发：
-
-### 第一步 (各自定义): 大家都在 src/mining/ 下建立自己的 .py 文件，把算法逻辑写好，写单元测试确保算法能跑通（这时候完全不用碰老文件）。
-
-第二步 (集成联调):
-
-负责 Track 1 的同学去改 src/retrieval/openalex.py。
-
-负责 Track 2 的同学去改 src/core/generator.py。
-
-负责 Track 3 的同学去改 ui/db.py 和 ui/app.py。
-
-这样可以最大程度减少代码冲突 (Merge Conflicts)。
-
-## 🔮 未来规划 (Phase 3: Production)
-- [ ] **Evaluation**: 引入 Ragas 框架对 RAG 生成质量进行自动化评估。
 
 ## ⚠️ 常见问题 (FAQ)
 ### Q1: 第一次运行时卡在 Loading Reranker 很久？

@@ -3,13 +3,16 @@ import streamlit as st
 import time
 import json
 import base64
+import random
 from db import (
     init_db, register_user, login_user, share_chat_to_square, 
     get_inspiration_posts, like_post, get_academic_star, 
     save_private_chat, get_private_history_list, save_or_update_chat,
-    delete_shared_chat, get_user_profile, update_user_profile 
+    delete_shared_chat, get_user_profile, update_user_profile, seed_from_json, 
+    fetch_recommendation_data
 )
-from logic import process_query, get_engine, recursive_summarize
+from logic import get_engine, recursive_summarize, perform_retrieval, get_response_stream, generate_viral_copy
+from src.mining.recommendation import RecommendationEngine
 
 # 初始化数据库
 init_db()
@@ -17,46 +20,129 @@ init_db()
 # 页面配置
 st.set_page_config(page_title="ScholarRAG", page_icon="🎓", layout="wide")
 
-# --- Theme & Style Injection ---
+# --- Theme & Style Injection (已修改：全员暗黑模式) ---
 def load_style(theme_key, font_key):
-    # Map friendly names to CSS classes
-    THEME_MAP = {
-        "Nature一作": "theme-nature",
-        "AI天才": "theme-ai",
-        "我想创业": "theme-startup",
-        "理科男": "theme-science",
-        "文艺青年": "theme-artsy"
-    }
-    
+    # 基础字体映射
     FONT_MAP = {
         "Sans-Serif": "'Google Sans', sans-serif",
         "Serif": "'Georgia', serif",
         "Monospace": "'Courier New', monospace"
     }
-
     font_fam = FONT_MAP.get(font_key, "'Google Sans', sans-serif")
 
-    # Read base CSS
-    with open("ui/style.css") as f:
-        base_css = f.read()
-    
-    # --- 修复核心：在这里补上 --input-bg 变量 ---
-    theme_vars = ""
-    if theme_key == "Nature一作":
-        # 🟢 Nature: 增加 --input-bg: #E5E7A2
-        theme_vars = "--bg-color: #EFDBB9; --sidebar-bg: #E5E7A2; --text-color: #947959; --accent-color: #C2C5A4; --input-bg: #E5E7A2;"
-    
-    elif theme_key == "AI天才":
-        theme_vars = "--bg-color: #0d001a; --sidebar-bg: #1a0033; --text-color: #00ffcc; --accent-color: #ff00ff; --input-bg: #1a0033;"
-    
-    elif theme_key == "我想创业":
-        theme_vars = "--bg-color: #ffffff; --sidebar-bg: #f0f4f8; --text-color: #0a192f; --accent-color: #0056b3; --input-bg: #f0f4f8;"
-    
-    elif theme_key == "文艺青年":
-        theme_vars = "--bg-color: #fdfbf7; --sidebar-bg: #f2e6d9; --text-color: #4a4a4a; --accent-color: #8c7b75; --input-bg: #f2e6d9;"
-    
-    else: # 理科男 (默认)
-        theme_vars = "--bg-color: #121316; --sidebar-bg: #1E2126; --text-color: #E0E0E0; --accent-color: #4285F4; --input-bg: rgba(255, 255, 255, 0.05);"
+    # 读取基础 CSS (ui/style.css)
+    try:
+        with open("ui/style.css") as f:
+            base_css = f.read()
+    except FileNotFoundError:
+        base_css = ""
+
+    # 统一深灰底座（所有主题共用）
+    base_vars = """
+        --bg-color: #121316;
+        --sidebar-bg: #1B1F24;
+        --panel-bg: rgba(255, 255, 255, 0.06);
+        --input-bg: rgba(255, 255, 255, 0.08);
+        --card-bg: rgba(255, 255, 255, 0.05);
+        --border-color: rgba(255, 255, 255, 0.14);
+    """
+
+    # 主题调色板：只变“前景系统”（文字/强调/链接等）
+    THEME_PRESETS = {
+        "理科男": {
+            "text": "#E6E9EF",
+            "muted": "#AAB3C0",
+            "accent": "#4DA6FF",
+            "accent2": "#7C3AED",
+            "accent3": "#22C55E",
+            "link": "#7AB7FF",
+        },
+        "Nature一作": {
+            "text": "#E9E1D3",
+            "muted": "#BFAF98",
+            "accent": "#6FBF73",   # 绿
+            "accent2": "#B07A4A",  # 棕
+            "accent3": "#D9B26F",  # 金棕（可选）
+            "link": "#8EDB95",
+        },
+        "我想创业": {
+            "text": "#F2F6FF",
+            "muted": "#B7C2D6",
+            "accent": "#3B82F6",   # 蓝
+            "accent2": "#F59E0B",  # 橙
+            "accent3": "#06B6D4",  # 青（可选）
+            "link": "#7FB2FF",
+        },
+        "AI天才": {
+            # 更荧光的“青绿字 + 粉色按钮”
+            "text":   "#7CFFEE",
+            "muted":  "#38FFE2",
+            "accent": "#FF2DAA",   # 主 accent：粉色（按钮/hover 主色）
+            "accent2":"#39FF14",   # 荧光绿
+            "accent3":"#B026FF",   # 荧光紫
+            "link":   "#7CFFEE",
+
+            # 让霓虹更突出：底更深、面板更亮一点
+            "bg":      "#0B0D10",
+            "sidebar": "#10131A",
+            "panel":   "rgba(255, 255, 255, 0.075)",
+            "card":    "rgba(255, 255, 255, 0.06)",
+            "input":   "rgba(255, 255, 255, 0.10)",
+            "border":  "rgba(255, 255, 255, 0.18)",
+        },
+
+        "文艺青年": {
+            "text":   "#E9E6DF",
+            "muted":  "#C9C2B7",
+            "accent": "#4A78B8",   # 牛仔蓝
+            "accent2":"#D07A57",   # 陶土橙（比土黄更耐看）
+            "accent3":"#F2E7D6",   # 米色高光
+            "link":   "#86AEE8",
+
+            # 背景稍浅一点（仍是深色系）
+            "bg":      "#171A1F",
+            "sidebar": "#20242C",
+            "panel":   "rgba(255, 255, 255, 0.065)",
+            "card":    "rgba(255, 255, 255, 0.055)",
+            "input":   "rgba(255, 255, 255, 0.095)",
+            "border":  "rgba(255, 255, 255, 0.16)",
+        }
+    }
+
+    preset = THEME_PRESETS.get(theme_key, THEME_PRESETS["理科男"])
+
+    # 统一深灰底座（默认值）
+    DEFAULTS = {
+        "bg": "#121316",
+        "sidebar": "#1B1F24",
+        "panel": "rgba(255, 255, 255, 0.06)",
+        "input": "rgba(255, 255, 255, 0.08)",
+        "card": "rgba(255, 255, 255, 0.05)",
+        "border": "rgba(255, 255, 255, 0.14)",
+    }
+
+    bg      = preset.get("bg", DEFAULTS["bg"])
+    sidebar = preset.get("sidebar", DEFAULTS["sidebar"])
+    panel   = preset.get("panel", DEFAULTS["panel"])
+    inp     = preset.get("input", DEFAULTS["input"])
+    card    = preset.get("card", DEFAULTS["card"])
+    border  = preset.get("border", DEFAULTS["border"])
+
+    theme_vars = f"""
+        --bg-color: {bg};
+        --sidebar-bg: {sidebar};
+        --panel-bg: {panel};
+        --input-bg: {inp};
+        --card-bg: {card};
+        --border-color: {border};
+
+        --text-color: {preset['text']};
+        --muted-text: {preset['muted']};
+        --accent-color: {preset['accent']};
+        --accent-2: {preset['accent2']};
+        --accent-3: {preset['accent3']};
+        --link-color: {preset['link']};
+    """
 
     final_css = f"""
     <style>
@@ -64,6 +150,67 @@ def load_style(theme_key, font_key):
         :root {{
             {theme_vars}
             --font-family: {font_fam};
+        }}
+
+        /* App base */
+        .stApp {{
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+        }}
+        .stSidebar {{
+            background-color: var(--sidebar-bg);
+        }}
+        .stChatInputContainer {{
+            background-color: var(--sidebar-bg);
+        }}
+
+        /* Links */
+        a {{
+            color: var(--link-color) !important;
+            text-decoration: none;
+        }}
+        a:hover {{
+            color: var(--accent-2) !important;
+            text-decoration: underline;
+        }}
+
+        /* Inputs / Panels */
+        textarea, input, .stTextInput input, .stTextArea textarea {{
+            background: var(--input-bg) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--border-color) !important;
+        }}
+
+        /* Buttons */
+        .stButton button {{
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            background-color: var(--panel-bg);
+        }}
+        .stButton button:hover {{
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            box-shadow: 0 0 0 1px var(--accent-color) inset;
+        }}
+
+        /* Cards (例如 inspiration-card) */
+        .inspiration-card {{
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+        }}
+
+        /* Muted text helper */
+        .muted, .stCaption, .stMarkdown p small {{
+            color: var(--muted-text) !important;
+        }}
+
+        /* Default avatar */
+        .default-avatar {{
+            background: rgba(255,255,255,0.10) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--border-color) !important;
         }}
     </style>
     """
@@ -76,6 +223,9 @@ def init_session():
         st.session_state.username = ""
     if "messages" not in st.session_state:
         st.session_state.messages = [] 
+
+    if "current_suggestions" not in st.session_state:
+        st.session_state.current_suggestions = []
     
     # [新增] 递归摘要状态
     if "current_summary" not in st.session_state:
@@ -231,285 +381,529 @@ def sidebar():
             
         return mode_key, use_graph
 
-# --- 聊天主逻辑 (集成递归摘要) ---
-def chat_page(mode, use_graph):
-    st.header("💬 学术对话")
+def get_smart_suggestions(username):
+    """
+    基于推荐系统，生成 4 个学术提问建议
+    """
+    suggestions = []
     
-    # 1. 渲染历史
+    # 1. 尝试获取个性化推荐
+    try:
+        users_data, posts_data, likes_data = fetch_recommendation_data()
+        rec_engine = RecommendationEngine(users_data, posts_data, likes_data)
+        # 获取 Top 5 推荐帖子
+        recs = rec_engine.recommend(username, top_k=5)
+        
+        # 2. 将帖子转化为问题
+        templates = [
+            "帮我深度解析 '{title}' 的核心理论",
+            "我想了解关于 '{title}' 的最新研究进展",
+            "请综述 '{title}' 相关的技术路线",
+            "'{title}' 在实际应用中有哪些挑战？",
+            "基于 '{title}' 写一段研究灵感"
+        ]
+        
+        for rec in recs:
+            # rec 结构: (id, owner, title, content, mode, likes)
+            title = rec[2]
+            # 去掉标题中的标签前缀 (如 [AI]) 以便句子更通顺
+            clean_title = title.split(']')[-1].strip() if ']' in title else title
+            
+            question = random.choice(templates).format(title=clean_title)
+            suggestions.append(question)
+            
+    except Exception as e:
+        print(f"Suggestion Error: {e}")
+    
+    # 3. 兜底逻辑：如果推荐系统没返回（新用户），或者不够4个，补充通用热门问题
+    fallback_questions = [
+        "解释一下 RAG (Retrieval-Augmented Generation) 的原理",
+        "Transformer 架构相比 RNN 有什么核心优势？",
+        "最新的 AI Agent 包含哪些核心组件？",
+        "如何利用 Deep Learning 进行蛋白质结构预测？",
+        "量子计算对密码学有哪些潜在威胁？"
+    ]
+    
+    # 补齐到 4 个
+    needed = 4 - len(suggestions)
+    if needed > 0:
+        suggestions.extend(random.sample(fallback_questions, min(needed, len(fallback_questions))))
+    
+    return suggestions[:4]
+
+def render_welcome_screen():
+    """渲染空状态下的欢迎页和猜你想问"""
+    st.markdown("""
+    <div style="text-align: center; margin-top: 50px; margin-bottom: 30px;">
+        <h1 style="color: var(--text-color); opacity: 0.9;">👋 Hi, Scholar!</h1>
+        <p style="color: var(--text-color); opacity: 0.6;">我是你的科研助手。你可以查询文献、生成综述或寻找灵感。</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<h4 style="text-align: center; opacity: 0.7; margin-bottom: 20px;">✨ 猜你想问 (Based on your interest)</h4>', unsafe_allow_html=True)
+
+    # 获取建议
+    questions = get_smart_suggestions(st.session_state.username)
+    
+    # [修改点 1] 定义回调函数：点击后只更新状态，不负责 Rerun (Streamlit 会自动处理)
+    def start_chat_callback(q_text):
+        st.session_state.messages.append({"role": "user", "content": q_text})
+        # 清空建议，防止下次还显示
+        st.session_state.current_suggestions = []
+
+    # 创建 2x2 网格
+    col1, col2 = st.columns(2)
+    
+    # [修改点 2] 将 if st.button + st.rerun 改为 on_click 回调模式
+    with col1:
+        st.button(
+            f"💡 {questions[0]}", 
+            use_container_width=True, 
+            on_click=start_chat_callback, 
+            args=(questions[0],)
+        )
+        st.button(
+            f"🔬 {questions[1]}", 
+            use_container_width=True, 
+            on_click=start_chat_callback, 
+            args=(questions[1],)
+        )
+            
+    with col2:
+        st.button(
+            f"📚 {questions[2]}", 
+            use_container_width=True, 
+            on_click=start_chat_callback, 
+            args=(questions[2],)
+        )
+        st.button(
+            f"🚀 {questions[3]}", 
+            use_container_width=True, 
+            on_click=start_chat_callback, 
+            args=(questions[3],)
+        )
+
+def chat_page(mode, use_graph):
+    if not st.session_state.messages:
+        render_welcome_screen()
+
+    # 2. 渲染历史消息
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if "sources" in msg and msg["sources"]:
-                with st.expander("📚 参考来源"):
+                 with st.expander("📚 参考来源"):
                     for p in msg["sources"]:
-                        st.write(f"- [{p['year']}] **{p['title']}** [PDF]({p['pdf_url']})")
+                        st.write(f"- [{p['year']}] **{p['title']}** [PDF]({p.get('pdf_url', '#')})")
 
-    # 2. 处理输入
+    if st.session_state.messages and \
+       st.session_state.messages[-1]["role"] == "assistant" and \
+       st.session_state.current_suggestions:
+        
+        st.markdown('<p style="font-size: 0.8em; color: var(--text-color); opacity: 0.6; margin-top: 10px;">✨ 猜你想问 (Follow-up):</p>', unsafe_allow_html=True)
+        
+        # 定义回调：点击后续问题 -> 上屏 -> 触发生成
+        def click_suggestion(q_text):
+            st.session_state.messages.append({"role": "user", "content": q_text})
+            # 点击后，清空当前的建议，防止重复点击
+            st.session_state.current_suggestions = []
+            # 回调结束后 Streamlit 会自动 rerun，进入下方的生成逻辑
+
+        # 使用列布局渲染按钮
+        cols = st.columns(len(st.session_state.current_suggestions))
+        for i, q in enumerate(st.session_state.current_suggestions):
+            with cols[i]:
+                # 使用 on_click 回调
+                st.button(q, key=f"sugg_{len(st.session_state.messages)}_{i}", on_click=click_suggestion, args=(q,), use_container_width=True)
+
     if prompt := st.chat_input("输入你的研究问题..."):
+        # 用户手动输入时，清除旧的推荐建议
+        st.session_state.current_suggestions = []
+        
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        st.rerun()
 
+    # =========================================================
+    # 4. 自动触发回复生成 (Core Loop)
+    # =========================================================
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        
         with st.chat_message("assistant"):
-            placeholder = st.empty()
-            placeholder.markdown("🤔 思考中...")
+            context_chunks = []
+            papers = []
             
-            # --- [A] 准备上下文 ---
-            # 策略：拿 "当前的全局摘要" + "尚未总结的最近几轮对话"
-            # 这样既不会丢失很久以前的信息，也保留了最近的鲜活上下文
-            
-            # 为了给 LLM 最好的 Prompt，我们这里把未总结的 raw text 也拼进去
-            unsummarized_msgs = st.session_state.messages[st.session_state.last_summarized_idx:]
-            # 这里的 unsummarized_msgs 其实包含了刚刚用户发的 prompt
-            # 我们只需要把 prompt 之前的拿出来做 context 即可，但为了简单，全部给 logic 处理
-            
-            recent_context_str = "\n".join([f"{m['role']}: {m['content']}" for m in unsummarized_msgs[:-1]]) # 不含当前prompt
-            
-            full_context_str = f"""
-            [Previous Summary]: {st.session_state.current_summary}
-            [Recent Context]: {recent_context_str}
-            """
-            
-            # --- [B] 生成回答 ---
-            # [修改] 传入 language 参数
-            response, sources = process_query(
-                prompt, 
-                mode, 
-                use_graph, 
-                full_context_str,
-                language=st.session_state.language  # <--- 从 Session 读取
-            )
-            
-            # 显示
-            placeholder.markdown(response)
-            if sources:
-                with st.expander("📚 参考来源"):
-                    for p in sources:
-                         st.write(f"- [{p['year']}] **{p['title']}** [PDF]({p['pdf_url']})")
-            
-            # 存入历史
-            st.session_state.messages.append({
-                "role": "assistant", 
-                "content": response,
-                "sources": sources
-            })
+            # --- RAG 检索阶段 ---
+            with st.status("🚀 正在启动学术引擎...", expanded=True) as status:
+                # 构造上下文
+                unsummarized_msgs = st.session_state.messages[st.session_state.last_summarized_idx:-1]
+                recent_context_str = "\n".join([f"{m['role']}: {m['content']}" for m in unsummarized_msgs])
+                full_context_str = f"[Previous Summary]: {st.session_state.current_summary}\n[Recent Context]: {recent_context_str}"
+                
+                status.write("🔍 分析意图并检索文献...")
+                try:
+                    user_query = st.session_state.messages[-1]["content"]
+                    context_chunks, papers, logs = perform_retrieval(user_query, use_graph, full_context_str)
+                    for log in logs: st.write(f"   ↳ {log}")
+                    status.update(label="✅ 文献阅读完成，正在撰写报告...", state="running", expanded=False)
+                except Exception as e:
+                    status.update(label="❌ 检索过程发生错误", state="error")
+                    st.error(f"Error: {e}")
+                    st.stop()
 
-            # ---------------------------------------------------------
-            # [新增] 自动保存逻辑 (Auto-Save)
-            # ---------------------------------------------------------
-            # 1. 确定摘要 (如果没有摘要，暂时用第一句话代替)
+            # --- LLM 生成阶段 ---
+            response_text = ""
+            try:
+                # 引入新函数 generate_follow_up_questions
+                from logic import generate_follow_up_questions 
+                
+                user_query = st.session_state.messages[-1]["content"]
+                stream_gen = get_response_stream(
+                    user_query, 
+                    mode, 
+                    full_context_str, 
+                    context_chunks, 
+                    language=st.session_state.language,
+                    papers_metadata=papers # <--- 新增：这是从 perform_retrieval 返回的
+                )
+                response_text = st.write_stream(stream_gen)
+                
+                if not response_text: response_text = "生成似乎中断了..."
+                
+            except Exception as e:
+                st.error(f"生成失败: {e}")
+                response_text = "生成失败。"
+
+            # 显示来源
+            if papers:
+                with st.expander("📚 参考来源"):
+                    for p in papers: st.write(f"- [{p['year']}] **{p['title']}** [PDF]({p.get('pdf_url', '#')})")
+            
+            # --- 保存助手回复 ---
+            st.session_state.messages.append({"role": "assistant", "content": response_text, "sources": papers})
+
+            # --- [关键步骤] 生成下一轮的猜你想问 ---
+            # 在回答生成完毕后，立即根据最新的上下文生成建议
+            # 此时的 full_context_str 包含了之前的信息，但我们需要把最新的问答也加进去生成建议
+            latest_interaction = f"User: {user_query}\nAssistant: {response_text}"
+            suggestion_context = f"{full_context_str}\n{latest_interaction}"
+            
+            # 异步/后台生成建议（为了体验，这里是同步的，但通常很快）
+            suggestions = generate_follow_up_questions(suggestion_context)
+            st.session_state.current_suggestions = suggestions
+
+            # --- 数据库持久化 ---
             current_sum = st.session_state.current_summary
             if not current_sum and st.session_state.messages:
                 current_sum = st.session_state.messages[0]['content'][:30] + "..."
 
-            # 2. 写入数据库 (Upsert)
-            new_id = save_or_update_chat(
-                chat_id=st.session_state.current_chat_id,
-                username=st.session_state.username,
-                summary=current_sum,
-                messages=st.session_state.messages
-            )
-            
-            # 3. 更新当前 ID (这样下一轮对话就会走 Update 逻辑而不是 Insert)
+            new_id = save_or_update_chat(st.session_state.current_chat_id, st.session_state.username, current_sum, st.session_state.messages)
             st.session_state.current_chat_id = new_id
-            # ---------------------------------------------------------
 
-            # --- [C] 异步/延迟更新摘要 ---
-            # 回答生成完后，默默更新一下摘要，为下一轮做准备
-            # 获取 LLM 引擎
+            # 递归摘要更新 (Optional)
             _, _, _, generator = get_engine()
-            
-            # 找出所有尚未总结的消息 (包含刚才的 User Prompt 和 Assistant Response)
             new_msgs = st.session_state.messages[st.session_state.last_summarized_idx:]
-            
-            # 如果累积了超过 2 轮对话 (4条消息)，就触发一次总结更新
-            # 这样可以减少 LLM 调用频率，不必每条都总结
             if len(new_msgs) >= 2:
-                with st.status("📝 正在整理记忆...", expanded=False) as status:
+                try:
                     new_summary = recursive_summarize(generator, st.session_state.current_summary, new_msgs)
                     st.session_state.current_summary = new_summary
                     st.session_state.last_summarized_idx = len(st.session_state.messages)
-                    status.update(label="记忆已更新", state="complete", expanded=False)
+                except: pass
+            
+            # Rerun 刷新界面，此时 st.session_state.current_suggestions 已有值，会在上方被渲染出来
+            st.rerun()
 
-    # 3. 分享按钮
+    
+    # 3. 分享按钮 (修改逻辑：点击生成金句)
     if st.session_state.messages:
         st.divider()
         col1, col2 = st.columns([8, 2])
         with col2:
-            if st.button("📤 分享到广场", use_container_width=True):
-                # A. 准备摘要
-                summary_to_share = st.session_state.current_summary
-                if not summary_to_share:
-                    first_msg = st.session_state.messages[0]['content']
-                    summary_to_share = first_msg[:200] + ("..." if len(first_msg)>200 else "")
-
-                # B. [关键] 在跳转前，确保当前对话已保存并获取到 ID
-                # 这样可以防止跳转回来后 ID 丢失变成 None，从而导致新建重复记录
+            if st.button("📤 生成灵感海报并分享", use_container_width=True):
+                # 1. 确保已保存
                 if st.session_state.current_chat_id is None:
-                    new_id = save_or_update_chat(
-                        chat_id=None,
-                        username=st.session_state.username,
-                        summary=summary_to_share,
-                        messages=st.session_state.messages
-                    )
+                    summary_fallback = st.session_state.messages[0]['content'][:30]
+                    new_id = save_or_update_chat(None, st.session_state.username, summary_fallback, st.session_state.messages)
                     st.session_state.current_chat_id = new_id
 
-                # C. 存入 Payload
+                # 2. 调用 LLM 生成 Social Summary
+                with st.spinner("✨ 正在提炼金句..."):
+                    full_text = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages])
+                    viral_copy = generate_viral_copy(full_text)
+                
+                # 3. 准备 Payload，默认全选消息
                 st.session_state.share_payload = {
-                    "summary": summary_to_share,
+                    "original_summary": viral_copy, # 初始生成的文案
                     "msgs": st.session_state.messages,
-                    "mode": mode
+                    "mode": mode,
+                    "selected_indices": list(range(len(st.session_state.messages))) # 默认全选
                 }
                 
-                # D. 页面跳转
                 st.session_state.page = "share_confirm" 
                 st.rerun()
 
+# --- [重写] share_confirm_page (支持编辑历史和摘要) ---
 def share_confirm_page():
     st.header("📤 分享到灵感广场")
     
-    # [安全检查] 防止直接访问此页面导致报错
     if "share_payload" not in st.session_state or not st.session_state.share_payload:
-        st.warning("没有待分享的内容，请返回对话页。")
+        st.warning("无内容。")
         if st.button("⬅️ 返回"):
             st.session_state.page = "chat"
             st.rerun()
         return
 
     payload = st.session_state.share_payload
-    
-    # 使用 Form 容器，这样看起来更整洁，且不会一修改标题就自动刷新
+    msgs = payload['msgs']
+
     with st.form("share_form"):
-        st.subheader("编辑发布信息")
+        # 1. 标题与摘要编辑
+        st.subheader("1. 编辑摘要 (用于广场展示)")
+        st.info("💡 这是一个“小红书”风格的短摘要，建议包含 Emoji 和 3 个核心点。")
         
-        # 允许用户修改标题
-        new_title = st.text_input("为这段对话起个标题", value=payload['summary'])
+        # 默认标题从摘要第一行提取，或者用户自己写
+        default_title = "我的学术灵感"
+        if payload.get("original_summary"):
+            first_line = payload["original_summary"].split('\n')[0]
+            if len(first_line) < 30: default_title = first_line.replace("#", "").strip()
+
+        new_title = st.text_input("标题", value=default_title)
+        new_summary = st.text_area("摘要内容 (金句)", value=payload['original_summary'], height=150, max_chars=300)
+
+        st.divider()
+
+        # 2. 对话历史选择
+        st.subheader("2. 选择要公开的对话片段")
+        st.caption("取消勾选以隐藏特定的问答。")
         
-        st.write("👀 **内容预览:**")
-        # 仅展示前几条作为预览
-        preview_len = min(3, len(payload['msgs']))
-        for i in range(preview_len):
-            m = payload['msgs'][i]
-            st.caption(f"**{m['role']}**: {m['content'][:100]}...")
-        if len(payload['msgs']) > 3:
-            st.caption(f"... (共 {len(payload['msgs'])} 条消息)")
+        # 这一步有点 trick，因为在 form 里不能动态 update session_state 的 list
+        # 我们使用 key 来记录 checkbox 的状态
+        
+        selected_msgs_mask = []
+        for i, msg in enumerate(msgs):
+            # 默认都是 True，除非用户改了
+            is_checked = st.checkbox(
+                f"**{msg['role']}**: {msg['content'][:60]}...", 
+                value=True, 
+                key=f"chk_msg_{i}"
+            )
+            selected_msgs_mask.append(is_checked)
 
         st.divider()
         
         c1, c2 = st.columns([1, 1])
         with c1:
-            # 提交按钮
-            submitted = st.form_submit_button("✅ 确认发布")
+            submitted = st.form_submit_button("✅ 确认发布", type="primary", use_container_width=True)
         
-    # 表单提交后的逻辑
     if submitted:
         if not new_title.strip():
             st.error("标题不能为空！")
         else:
-            # 写入 Shared Chats 表
-            share_chat_to_square(
-                st.session_state.username, 
-                new_title, 
-                payload['msgs'], 
-                payload['mode']
-            )
-            st.toast("🎉 发布成功！正在前往广场...")
-            time.sleep(1.5)
-            # 清除 payload 释放内存
-            del st.session_state.share_payload
-            st.session_state.page = "square"
-            st.rerun()
+            # 过滤消息
+            final_msgs = [m for i, m in enumerate(msgs) if selected_msgs_mask[i]]
+            
+            if not final_msgs:
+                st.error("请至少保留一条消息内容。")
+            else:
+                # 写入 Shared Chats 表
+                # 这里我们把 new_summary 存入 content 还是 title? 
+                # 通常 title 存 title, content 存 json。
+                # 现在的表结构是 title, content(json), mode.
+                # 我们可以把 new_summary 放在 content 的一个特殊字段里，或者作为 content 的一部分。
+                # 为了兼容，我们把 new_summary 插入到 final_msgs 的前面作为系统提示？
+                # 不，最好是不破坏 msg 结构。
+                # 既然 `share_chat_to_square` 只存 content，我们可以把 summary 放在 content 的 metadata 里？
+                # 或者：我们修改 `share_chat_to_square` 逻辑？
+                # 为了简单起见，我们把 `new_summary` 仅仅作为 UI 展示用的摘要？ 
+                # 实际上 `square_page` 列表里展示的是 title。
+                # 让我们把 new_summary 拼接到 title 后面？太长。
+                # 💡 方案：我们在 json 里存 {"summary": "...", "messages": [...]}
+                # 这样需要在 square_page 解析时做兼容。
+                
+                final_content = {
+                    "summary": new_summary,
+                    "messages": final_msgs
+                }
 
-    # 取消按钮 (在 Form 外面，否则会触发 Form 提交)
+                share_chat_to_square(
+                    st.session_state.username, 
+                    new_title, 
+                    final_content,  # 存入 Dict，稍后 json.dumps
+                    payload['mode']
+                )
+                st.toast("🎉 发布成功！正在前往广场...")
+                time.sleep(1.5)
+                del st.session_state.share_payload
+                st.session_state.page = "square"
+                st.rerun()
+
     if st.button("❌ 取消"):
         st.session_state.page = "chat"
         st.rerun()
 
-# --- 灵感广场页面 ---
+# --- [重写] square_page (支持直接发布 & 新的数据结构解析) ---
 def square_page():
     if st.button("⬅️ 返回对话", key="back_to_chat"):
         st.session_state.page = "chat"
         st.rerun()
         
     st.header("✨ 灵感广场")
+
+    recommended_posts = []
+    if st.session_state.logged_in:
+        try:
+            # 1. 抓取全量数据
+            users_data, posts_data, likes_data = fetch_recommendation_data()
+            # 2. 实例化引擎
+            rec_engine = RecommendationEngine(users_data, posts_data, likes_data)
+            # 3. 计算推荐 (返回格式已调整为 tuple list)
+            recommended_posts = rec_engine.recommend(st.session_state.username, top_k=10)
+        except Exception as e:
+            st.error(f"推荐系统初始化失败: {e}")
+    
+    with st.expander("🛠️ 刷新", expanded=False):
+        col_dbg_1, col_dbg_2 = st.columns([1, 1])
+        with col_dbg_1:
+            if st.button("🔄 载入/刷新 Mock 数据", help="读取 mock_data.json 并注入数据库（自动去重）", use_container_width=True):
+                with st.spinner("正在注入模拟数据..."):
+                    # 1. 尝试注入
+                    success, msg = seed_from_json("mock_data.json")
+                    if success:
+                        st.success(f"操作完成！\n{msg}")
+                        time.sleep(1.5)
+                        st.rerun()
+                    else:
+                        st.error(f"失败: {msg}\n请确保根目录下有 mock_data.json 文件")
+        
+        with col_dbg_2:
+            st.caption("ℹ️ 说明：此操作会将 JSON 中的新帖子和点赞记录同步到数据库。已存在的标题不会重复插入。")
+
+    # --- [新增] 发布新想法入口 ---
+    with st.expander("✍️ 发布新想法 / Post Idea", expanded=False):
+        with st.form("new_post_form"):
+            p_title = st.text_input("标题", placeholder="例如：关于 Transformer 的一点思考...")
+            p_summary = st.text_area("核心观点 (金句)", placeholder="一句话总结你的想法，支持 Emoji 💡", height=80)
+            p_content = st.text_area("详细内容 (Markdown)", height=200)
+            p_tag = st.selectbox("标签", ["inspire (脑暴)", "review (综述)", "explain (深度)"])
+            
+            if st.form_submit_button("🚀 发布"):
+                if not p_title or not p_content:
+                    st.error("标题和内容不能为空")
+                else:
+                    # 构造伪造的消息列表，以便查看器渲染
+                    fake_msgs = [{"role": "user", "content": p_content}]
+                    final_data = {
+                        "summary": p_summary,
+                        "messages": fake_msgs
+                    }
+                    share_chat_to_square(st.session_state.username, p_title, final_data, p_tag)
+                    st.success("发布成功！")
+                    time.sleep(1)
+                    st.rerun()
     
     # 榜单
     star_user, star_likes = get_academic_star()
     if star_user != "暂无":
         st.info(f"🏆 本周学术之星: **{star_user}** (总获赞 {star_likes})")
-    
-    posts = get_inspiration_posts()
-    
-    if not posts:
-        st.write("广场暂时空空如也，快去分享你的第一个灵感吧！")
-    
-    current_user = st.session_state.username
 
-    for pid, post_owner, title, content_json, p_mode, likes in posts:
-        with st.container():
-            # 卡片样式
-            st.markdown(f"""
-            <div class="inspiration-card">
-                <h3>{title}</h3>
-                <p>👤 <b>{post_owner}</b> | 🏷️ 模式: {p_mode} | ❤️ {likes}</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # 判断是否是自己的帖子
-            is_my_post = (post_owner == current_user)
-            
-            # 布局调整：根据是否是自己的帖子，分配列宽
-            if is_my_post:
-                # 如果是自己的，分三栏：点赞(展示用) | 删除按钮 | 详情
-                col1, col2, col3 = st.columns([1.5, 1.5, 7])
-            else:
-                # 如果是别人的，分两栏：点赞按钮 | 详情
-                col1, col3 = st.columns([1.5, 8.5])
-                col2 = None
+    st.divider()
+    
+    # 1. 定义渲染函数 (避免代码重复)
+    def render_feed(posts, source_tab):
+        current_user = st.session_state.username
+        if not posts:
+            st.info("这里空空如也~")
+            return
 
-            # --- 第一列：点赞 (功能相同) ---
-            with col1:
-                btn_label = f"❤️ ({likes})"
-                # 只有非本人才能点赞，且通过数据库校验
-                if st.button(btn_label, key=f"like_{pid}", use_container_width=True, disabled=is_my_post):
-                    if is_my_post:
-                        st.toast("不能给自己点赞哦", icon="🚫")
+        for pid, post_owner, title, content_json, p_mode, likes in posts:
+            with st.container():
+                # 解析内容
+                try:
+                    data = json.loads(content_json)
+                    if isinstance(data, list):
+                        summary_text = data[0]['content'][:100] + "..."
+                        messages = data
                     else:
-                        success, msg = like_post(pid, current_user)
-                        if success:
-                            st.balloons()
-                            st.toast(msg)
-                            time.sleep(1)
-                            st.rerun()
-                        else:
-                            st.toast(msg, icon="🚫")
+                        summary_text = data.get("summary", "")
+                        messages = data.get("messages", [])
+                except:
+                    summary_text = "数据解析错误"
+                    messages = []
 
-            # --- 第二列：删除 (仅作者可见) ---
-            if is_my_post and col2:
-                with col2:
-                    # 使用红色按钮区分
-                    if st.button("🗑️ 删除", key=f"del_share_{pid}", type="primary", use_container_width=True):
-                        if delete_shared_chat(pid, current_user):
-                            st.toast("已删除你的分享", icon="✅")
-                            time.sleep(1)
-                            st.rerun()
-                        else:
-                            st.error("删除失败，可能权限不足")
+                # 卡片 UI
+                st.markdown(f"""
+                <div class="inspiration-card">
+                    <h3>{title}</h3>
+                    <p style="font-size: 0.9em; color: var(--text-color); opacity: 0.8; margin-bottom: 8px;">
+                        {summary_text.replace(chr(10), '<br>')}
+                    </p>
+                    <p style="font-size: 0.8em; opacity: 0.6;">
+                        👤 <b>{post_owner}</b> | 🏷️ {p_mode} | ❤️ {likes}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                is_my_post = (post_owner == current_user)
+                
+                # 交互按钮区
+                if is_my_post:
+                    col1, col2, col3 = st.columns([1.5, 1.5, 7])
+                else:
+                    col1, col3 = st.columns([1.5, 8.5])
+                    col2 = None
 
-            # --- 第三列：详情展开 ---
-            with col3:
-                with st.expander("查看对话详情"):
-                    try:
-                        chat_data = json.loads(content_json)
-                        for msg in chat_data:
+                with col1:
+                    # [修复] 加上唯一的 key 前缀，防止 Tab 切换时 key 冲突
+                    btn_key = f"like_{pid}_{p_mode}_{source_tab}"
+                    if st.button(f"❤️ ({likes})", key=btn_key, use_container_width=True, disabled=is_my_post):
+                        if not is_my_post:
+                            success, msg = like_post(pid, current_user)
+                            if success:
+                                st.balloons()
+                                st.toast(msg)
+                                time.sleep(0.5)
+                                st.rerun()
+                            else:
+                                st.toast(msg, icon="🚫")
+
+                if is_my_post and col2:
+                    with col2:
+                        del_key = f"del_{pid}_{p_mode}_{source_tab}"
+                        if st.button("🗑️ 删除", key=del_key, type="primary", use_container_width=True):
+                            if delete_shared_chat(pid, current_user):
+                                st.toast("已删除", icon="✅")
+                                time.sleep(1)
+                                st.rerun()
+
+                with col3:
+                    with st.expander("查看详情"):
+                        for msg in messages:
                             role_icon = "🧑‍💻" if msg['role'] == "user" else "🤖"
-                            # 限制一下过长的内容显示
-                            content_display = msg['content']
-                            st.markdown(f"**{role_icon} {msg['role']}**: {content_display}")
-                    except:
-                        st.error("数据解析失败")
-            
-            st.divider()
+                            st.markdown(f"**{role_icon} {msg['role']}**: {msg['content']}")
+                
+                st.divider()
+
+    tab_rec, tab_hot, tab_new = st.tabs(["✨ 猜你喜欢", "🔥 热门精选", "🆕 最新发布"])
+    
+    with tab_rec:
+        if not st.session_state.logged_in:
+            st.warning("请登录后查看个性化推荐")
+        else:
+            if recommended_posts:
+                st.caption(f"基于你的 Bio 和近期点赞行为生成的推荐 (Top {len(recommended_posts)})")
+                # 调用现有的渲染函数，传入 distinct tab name
+                render_feed(recommended_posts, "rec")
+            else:
+                st.info("暂无推荐，去给其他帖子点点赞吧！")
+
+    with tab_hot:
+        st.caption("按点赞数排序，发现社区共识")
+        hot_posts = get_inspiration_posts(sort_by="hot")
+        render_feed(hot_posts, "hot")
+        
+    with tab_new:
+        st.caption("按时间倒序，发现新鲜灵感")
+        new_posts = get_inspiration_posts(sort_by="new")
+        render_feed(new_posts, "new")
 
 # 个人中心
 def profile_page():
@@ -520,27 +914,33 @@ def profile_page():
 
     st.title("⚙️ 个人中心")
     
-    # 获取数据
     profile = get_user_profile(st.session_state.username)
     current_bio = profile.get("bio") or ""
     current_avatar_blob = profile.get("avatar")
     
-    # --- 布局修改：不再使用 columns，直接垂直排列 ---
+    st.subheader("头像设置")
     
-    # 1. 头像区域 (居中显示)
-    st.subheader("头像")
-    # 创建一个居中的容器
-    c1, c2, c3 = st.columns([1, 1, 1])
-    with c2: # 在中间列渲染头像
-        render_avatar(st.session_state.username, current_avatar_blob, size=150)
-        st.markdown("<br>", unsafe_allow_html=True) # 加点间距
+    # --- [修改] 布局优化：左侧头像，右侧紧凑上传 ---
+    # 使用 1:3 的比例，让头像列变窄 (col1)，上传组件在右侧 (col2)
+    col1, col2 = st.columns([1, 4], gap="medium")
+    
+    with col1:
+        # 渲染头像，稍微改小一点 size 以适应窄列
+        render_avatar(st.session_state.username, current_avatar_blob, size=100)
+    
+    with col2:
+        # 使用 vertical_alignment 让上传按钮和头像垂直对齐 (需要 Streamlit 1.37+ 支持，如果不支持可忽略)
+        st.markdown('<div style="margin-top: 15px;"></div>', unsafe_allow_html=True) # 简单的垂直对齐 Hack
         
-        uploaded_file = st.file_uploader("更换头像 (支持 JPG/PNG)", type=['png', 'jpg', 'jpeg'])
+        # label_visibility="collapsed" 隐藏 "Browse files" 上面的文字标签，节省空间
+        uploaded_file = st.file_uploader("更换头像", type=['png', 'jpg', 'jpeg'], label_visibility="collapsed")
+        
         if uploaded_file is not None:
             bytes_data = uploaded_file.getvalue()
-            if st.button("保存头像", use_container_width=True):
+            # 按钮也设置 use_container_width=False 让它变小
+            if st.button("✅ 确认上传", key="save_avatar_btn"):
                 update_user_profile(st.session_state.username, avatar_bytes=bytes_data)
-                st.success("头像已更新")
+                st.success("已更新")
                 time.sleep(1)
                 st.rerun()
 
@@ -626,34 +1026,7 @@ def profile_page():
             time.sleep(1)
             st.rerun()
 
-    st.divider()
-
-    st.subheader("📊 我的数据")
     
-    # 2. [严谨逻辑] 从数据库获取真实数据
-    # 使用 db.py 中已导入的 get_private_history_list 函数
-    try:
-        # 获取真实的历史记录列表
-        # 注意: db.py 中该函数默认 LIMIT 20，这里显示的是最近的记录数
-        history_list = get_private_history_list(st.session_state.username)
-        real_count = len(history_list)
-        
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            st.metric(label="最近归档会话", value=str(real_count))
-        
-        with col2:
-            if real_count > 0:
-                with st.expander("📄 查看最近归档记录 (预览)"):
-                    for item in history_list:
-                        # 格式化时间显示，仅保留日期和时间的前半部分
-                        time_str = item['updated_at'].replace("T", " ")[:16]
-                        st.caption(f"**{time_str}** | {item['summary']}")
-            else:
-                st.info("暂无归档记录，快去开始你的第一次学术对话吧！")
-                
-    except Exception as e:
-        st.error(f"读取数据库失败: {e}")
 
 # --- 主逻辑 ---
 def main():

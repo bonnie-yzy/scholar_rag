@@ -1,6 +1,5 @@
-/* ui/style.css - 终极修复版 (v4) */
-
-/* --- 1. 基础动画与变量定义 --- */
+/* --- 1. 必须先定义动画关键帧 (Keyframes) --- */
+/* 如果缺少这段，rainbow-text 就找不到怎么动，文字会变成透明消失 */
 @keyframes rainbow-move {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -8,186 +7,196 @@
 }
 
 :root {
-    /* 默认变量 (会被 Python 动态注入覆盖) */
     --bg-color: #fdfbf7;
     --sidebar-bg: #f2e6d9;
     --text-color: #4a4a4a;
     --accent-color: #8c7b75;
     --input-bg: #f2e6d9;
-    --font-family: 'Google Sans', sans-serif;
 }
 
-/* --- 2. 核心容器与背景修复 --- */
-
-/* 2.1 全局背景 */
+/* --- 2. 核心容器背景 --- */
 .stApp {
     background-color: var(--bg-color) !important;
 }
-
-/* 2.2 顶部 Header (彻底去色) */
 header[data-testid="stHeader"] {
     background: transparent !important;
     border-bottom: none !important;
 }
-
-/* 2.3 底部输入区容器 (彻底修复黑条) */
-/* 这里的关键是把 background 简写属性重置，并覆盖所有层级 */
 div[data-testid="stBottom"] {
-    background: var(--bg-color) !important; 
-    background-color: var(--bg-color) !important;
+    background-color: var(--bg-color) !important; 
     border-top: none !important;
 }
 div[data-testid="stBottom"] > div {
-    background: var(--bg-color) !important; 
+    background-color: var(--bg-color) !important; 
 }
 
-/* 2.4 侧边栏 */
+/* --- 3. 字体与颜色 (仅控制颜色，放权字体给 Streamlit 默认以修复图标) --- */
+.stMarkdown, h1, h2, h3, h4, h5, h6, p, li, label, input, textarea {
+    color: var(--text-color) !important;
+    /* 删除 font-family 强制设置，解决图标变文字问题 */
+}
+
+/* --- 5. 彩虹文字特效 (ScholarRAG) --- */
+.rainbow-text {
+    /* 渐变背景：红->橙->黄->绿->蓝->紫->红，形成循环 */
+    background: linear-gradient(90deg, #002bff, #7a00ff, #ff00c8, #ff0000);
+    
+    /* 背景尺寸：必须大于100%才能流动 */
+    background-size: 200% auto;
+    
+    /* 文字裁切：核心属性，让背景只在文字上显示 */
+    -webkit-background-clip: text;
+    background-clip: text;
+    
+    /* 文字透明：让背景透出来 */
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    
+    /* 动画：10秒循环，线性匀速 */
+    animation: rainbow-move 20s linear infinite;
+    
+    /* 字体样式 */
+    font-size: 3rem; /* 已加大 */
+    font-weight: 900;  /* 特粗 */
+    margin-bottom: 20px;
+    display: block;
+    line-height: 1.2;
+    padding-bottom: 5px; /* 防止下半部分被切掉 */
+}
+
+/* --- 4. 按钮统一 --- */
+.main .stButton button,
+div[data-testid="stFileUploader"] button,
+button[kind="primary"],
+button[kind="secondary"] {
+    background-color: var(--sidebar-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-weight: 500 !important;
+}
+.main .stButton button:hover,
+div[data-testid="stFileUploader"] button:hover,
+button[kind="primary"]:hover,
+button[kind="secondary"]:hover {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: transparent !important;
+}
+
+/* 侧边栏按钮 */
 section[data-testid="stSidebar"] {
     background-color: var(--sidebar-bg) !important;
-    border-right: 1px solid rgba(128,128,128, 0.1);
 }
-
-/* 2.5 全局文字 */
-.stMarkdown, h1, h2, h3, h4, h5, h6, p, li, label, span, div, small {
-    color: var(--text-color) !important;
-    font-family: var(--font-family) !important;
-}
-
-/* --- 3. 按钮样式 (自适应主题色 + 加深) --- */
-
-/* 3.1 侧边栏按钮 */
 section[data-testid="stSidebar"] .stButton button {
     width: 100% !important;
     text-align: left !important;
     justify-content: flex-start !important;
     padding-left: 1rem !important;
-    background-color: rgba(0, 0, 0, 0.05) !important; /* 基础加深 */
-    border: 1px solid rgba(0,0,0,0.05) !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border: none !important;
     color: var(--text-color) !important;
-    border-radius: 8px;
-    margin-bottom: 4px;
 }
 section[data-testid="stSidebar"] .stButton button:hover {
     background-color: var(--accent-color) !important;
     color: white !important;
 }
 
-/* 3.2 主区域按钮 (修复黑色按钮问题) */
-/* 包含普通按钮和 Primary 按钮(如保存/登录) */
-.main .stButton button {
-    /* 核心逻辑：使用侧边栏颜色作为基底，然后通过滤镜变暗，实现"加深"效果 */
-    background-color: var(--sidebar-bg) !important; 
-    filter: brightness(0.95); /* 比背景暗 5% */
-    color: var(--text-color) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
-    border-radius: 8px;
-    box-shadow: none !important;
-    transition: all 0.2s;
-}
-
-.main .stButton button:hover {
-    /* Hover 时使用强调色 */
-    background-color: var(--accent-color) !important;
-    filter: brightness(1); /* 恢复亮度 */
-    color: white !important;
-    transform: translateY(-1px);
-}
-
-/* --- 4. 侧边栏折叠箭头修复 (精准定位) --- */
-
-/* 4.1 隐藏默认的 SVG 图标 */
-button[data-testid="stSidebarCollapseButton"] svg,
-button[data-testid="stSidebarExpandButton"] svg {
-    display: none !important;
-}
-
-/* 4.2 侧边栏展开时 (Sidebar右上角)：显示向左箭头 */
-button[data-testid="stSidebarCollapseButton"]::after {
-    content: "←";  /* 向左箭头 */
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--text-color) !important;
-}
-
-/* 4.3 侧边栏折叠时 (ChatPage左上角)：显示向右箭头或菜单 */
-button[data-testid="stSidebarExpandButton"]::after {
-    content: "→";  /* 向右箭头，提示展开 */
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--text-color) !important;
-}
-
-/* 确保箭头按钮本身背景透明，去除边框 */
-button[data-testid="stSidebarCollapseButton"],
-button[data-testid="stSidebarExpandButton"] {
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-
-/* --- 5. 输入框体系美化 --- */
-
-/* Chat 输入框 */
-div[data-testid="stChatInput"] textarea {
-    background-color: rgba(255,255,255,0.3) !important; /* 微微透白，增加层次感 */
-    color: var(--text-color) !important;
-    border: 1px solid rgba(128, 128, 128, 0.3) !important;
-    border-radius: 24px !important;
-}
-/* 去除 ChatInput 外部容器可能存在的背景 */
-div[data-testid="stChatInput"] {
-    background-color: transparent !important;
-}
-
-/* 普通文本框 (Bio, Login) */
-div[data-testid="stTextInput"] input,
-div[data-testid="stTextArea"] textarea {
-    background-color: var(--sidebar-bg) !important; /* 与侧边栏同色 */
-    color: var(--text-color) !important;
-    border: 1px solid rgba(128, 128, 128, 0.2) !important;
-    border-radius: 12px !important;
-}
-
-
-/* --- 6. 其他组件 --- */
-
-/* Radio 按钮 (选项卡) */
-div[row-widget="radio"] div[role="radiogroup"] > label {
-    background-color: var(--sidebar-bg) !important;
-    border: 1px solid rgba(128,128,128,0.1);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    margin-right: 8px;
-}
-div[row-widget="radio"] div[role="radiogroup"] > label[data-checked="true"] {
-    background-color: var(--accent-color) !important;
-    color: white !important;
-    border-color: transparent;
-}
-div[row-widget="radio"] div[role="radiogroup"] p {
-    font-weight: 500;
-}
-
-/* 文件上传框 */
+/* --- 5. 组件去黑修复 --- */
 div[data-testid="stFileUploader"] section {
     background-color: var(--sidebar-bg) !important;
     border: 1px dashed var(--accent-color) !important;
+    color: var(--text-color) !important;
 }
+div[data-testid="stFileUploader"] section > div,
 div[data-testid="stFileUploader"] section span,
 div[data-testid="stFileUploader"] section small {
     color: var(--text-color) !important;
 }
 
-/* 提示框 (Info/Alert) */
-div[data-testid="stAlert"] {
-    background-color: var(--sidebar-bg) !important;
-    color: var(--text-color) !important;
-    border: none !important;
+div[data-testid="stChatInput"] {
+    background-color: transparent !important;
 }
-div[data-testid="stAlert"] svg {
-    fill: var(--text-color) !important;
+div[data-testid="stChatInput"] textarea {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+    border: 1px solid rgba(128, 128, 128, 0.5) !important;
+    border-radius: 24px !important;
+}
+div[data-testid="stChatInput"] textarea:focus {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 1px var(--accent-color) !important;
 }
 
-/* 强制清除浏览器默认样式 */
-input, textarea, select { color-scheme: normal !important; }
+div[data-testid="stTextInput"] input,
+div[data-testid="stTextArea"] textarea {
+    background-color: var(--sidebar-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid rgba(128, 128, 128, 0.2) !important;
+    border-radius: 12px !important;
+}
+
+/* 灵感卡片样式 */
+.inspiration-card {
+    background-color: var(--sidebar-bg);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.inspiration-card h3 {
+    margin-top: 0;
+    font-size: 1.1em;
+    color: var(--accent-color) !important;
+}
+
+/* 侧边栏折叠箭头修复 (使用伪元素覆盖) */
+button[data-testid="stSidebarCollapseButton"] svg, 
+button[data-testid="stSidebarExpandButton"] svg {
+    display: none !important;
+}
+button[data-testid="stSidebarCollapseButton"]::after {
+    content: "◀"; 
+    font-size: 18px; color: var(--text-color) !important;
+}
+button[data-testid="stSidebarExpandButton"]::after {
+    content: "▶"; 
+    font-size: 18px; color: var(--text-color) !important;
+}
+
+
+/* 修复圆形头像 (图片版) */
+.user-avatar-circle {
+    border-radius: 50% !important;
+    object-fit: cover;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 2px solid var(--sidebar-bg);
+}
+
+/* 修复圆形头像 (文字版) */
+.default-avatar {
+    border-radius: 50% !important;
+    background-color: var(--sidebar-bg);
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    border: 2px solid var(--accent-color);
+}
+
+/* --- 7. 文件上传组件小型化 Hack --- */
+/* 让上传区域变矮，去除多余的 padding */
+div[data-testid="stFileUploader"] {
+    padding-top: 0 !important;
+}
+div[data-testid="stFileUploader"] section {
+    padding: 10px !important; /* 减小内部边距 */
+    min-height: 0 !important; /* 允许高度塌陷 */
+}
+/* 隐藏 "Drag and drop file here" 文字，只保留 Browse 按钮，让它看起来更干净 (可选) */
+div[data-testid="stFileUploader"] section > div > div > small {
+    display: none; 
+}

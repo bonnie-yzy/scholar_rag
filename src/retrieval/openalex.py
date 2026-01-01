@@ -11,6 +11,13 @@ from src.config import settings
 from src.retrieval.base import BaseRetriever
 from src.utils.logger import setup_logger
 
+# [新增] 导入 PageRank 计算函数 (请确保 src/mining/graph_ranking.py 存在)
+try:
+    from src.mining.graph_ranking import calculate_pagerank
+except ImportError:
+    # 兜底：如果文件没拷过来，定义一个空函数防止报错，但功能会失效
+    def calculate_pagerank(**kwargs): return {}
+
 # 配置 OpenAlex
 pyalex.config.email = settings.OPENALEX_EMAIL
 
@@ -50,7 +57,7 @@ class OpenAlexRetriever(BaseRetriever):
             return None
 
     def _rank_papers(self, query: str, papers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """使用 BGE-Reranker 进行重排"""
+        """使用 BGE-Reranker 对候选论文进行语义重排序"""
         if not papers: return []
         
         if self._bge_reranker is None:
@@ -81,6 +88,89 @@ class OpenAlexRetriever(BaseRetriever):
             return ranked_papers
         except Exception as e:
             self.logger.error(f"Rerank prediction failed: {e}")
+            return papers
+
+    # [新增方法] 引用图重排序逻辑
+    def _apply_citation_graph_rerank(self, papers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        基于局部引文子图的 PageRank 融合重排序 (Citation Graph Re-ranking)
+        融合公式: Hybrid = alpha * BGE_Score + beta * PageRank_Score
+        """
+        if not papers:
+            return []
+        # 检查配置开关，默认为 True
+        if not getattr(settings, "ENABLE_CITATION_RERANK", True):
+            return papers
+
+        try:
+            alpha = float(getattr(settings, "CITATION_RERANK_ALPHA", 0.8))
+            beta = float(getattr(settings, "CITATION_RERANK_BETA", 0.2))
+            
+            # 构建节点 ID 列表
+            node_ids = [p.get("id") for p in papers if p.get("id")]
+            node_set = set(node_ids)
+
+            # 构建局部引文图的边 (只保留 Top-N 内部的引用关系)
+            edges = []
+            edge_cnt = 0
+            for p in papers:
+                src = p.get("id")
+                if not src or src not in node_set:
+                    continue
+                refs = p.get("referenced_works") or []
+                for dst in refs:
+                    if dst in node_set and dst != src:
+                        edges.append((src, dst))
+                        edge_cnt += 1
+
+            # 如果边太少，PageRank 没意义，直接返回原列表
+            if edge_cnt < 2:
+                return papers
+
+            # 计算 PageRank
+            pr = calculate_pagerank(
+                nodes=node_ids,
+                edges=edges,
+                damping=float(getattr(settings, "PAGERANK_DAMPING", 0.85)),
+                max_iter=int(getattr(settings, "PAGERANK_MAX_ITER", 100)),
+                tol=float(getattr(settings, "PAGERANK_TOL", 1e-6)),
+            )
+
+            # 归一化 BGE 分数 (Min-Max Normalization)
+            rerank_scores = [float(p.get("_rerank_score", 0.0)) for p in papers]
+            r_min = min(rerank_scores) if rerank_scores else 0.0
+            r_max = max(rerank_scores) if rerank_scores else 0.0
+            r_denom = (r_max - r_min) if (r_max - r_min) > 1e-12 else 1.0
+
+            # 归一化 PageRank 分数 (除以最大值)
+            pr_scores = [float(pr.get(p.get("id", ""), 0.0)) for p in papers]
+            pr_max = max(pr_scores) if pr_scores else 0.0
+            pr_denom = pr_max if pr_max > 1e-12 else 1.0
+
+            enriched = []
+            for p in papers:
+                pid = p.get("id", "")
+                rerank = float(p.get("_rerank_score", 0.0))
+                pr_v = float(pr.get(pid, 0.0))
+                
+                # 计算归一化分数
+                rerank_norm = (rerank - r_min) / r_denom
+                pr_norm = pr_v / pr_denom
+
+                p2 = p.copy()
+                p2["_pagerank_score"] = pr_v
+                p2["_rerank_score_norm"] = rerank_norm
+                p2["_pagerank_score_norm"] = pr_norm
+                # 计算最终混合分数
+                p2["_hybrid_score"] = alpha * rerank_norm + beta * pr_norm
+                enriched.append(p2)
+
+            # 按混合分数重新排序
+            enriched.sort(key=lambda x: x.get("_hybrid_score", 0.0), reverse=True)
+            self.logger.info(f"Citation rerank applied (nodes={len(node_ids)}, edges={edge_cnt}).")
+            return enriched
+        except Exception as e:
+            self.logger.warning(f"Citation rerank failed, fallback to rerank only. err={e}")
             return papers
 
     def search(self, query: str, top_k: int = None, concept_ids: list = None, **kwargs) -> list:
@@ -124,7 +214,6 @@ class OpenAlexRetriever(BaseRetriever):
             except Exception:
                 pass
 
-        # 如果 Concept 搜索为空，自动降级为文本搜索兜底 (保持鲁棒性)
         if not results and concept_ids:
             self.logger.warning("Concept search returned 0 results. Fallback to text search.")
             results = base_query.search(query).get(per_page=candidate_k)
@@ -148,7 +237,6 @@ class OpenAlexRetriever(BaseRetriever):
                     pdf_url = arxiv_url.replace("/abs/", "/pdf/")
                     if not pdf_url.endswith(".pdf"): pdf_url += ".pdf"
 
-
             authors = [a.get("author", {}).get("display_name") for a in work.get("authorships", [])]
             
             papers.append({
@@ -160,15 +248,30 @@ class OpenAlexRetriever(BaseRetriever):
                 "url": work.get("doi") or work.get("id"),
                 "pdf_url": pdf_url,
                 "authors": authors[:5],
-                "concepts": [c["display_name"] for c in work.get("concepts", [])[:3]]
+                "concepts": [c["display_name"] for c in work.get("concepts", [])[:3]],
+                # [新增] 提取引用列表，用于构建局部引文图
+                "referenced_works": work.get("referenced_works") or [],
             })
 
-        # Rerank
+        # 1. 语义重排 (BGE Rerank)
         self.logger.info(f"Reranking {len(papers)} candidates...")
         ranked_papers = self._rank_papers(query, papers)
-        final_papers = ranked_papers[:top_k]
 
-        # Debug 日志 (写入文件)
+        # 2. [新增] 引用图重排 (PageRank 融合)
+        # 允许通过 kwargs 动态覆盖配置，否则读取 settings
+        enable_citation_rerank = kwargs.get("enable_citation_rerank", None)
+        if enable_citation_rerank is not None:
+            if bool(enable_citation_rerank):
+                final_ranked = self._apply_citation_graph_rerank(ranked_papers)
+            else:
+                final_ranked = ranked_papers
+        else:
+            final_ranked = self._apply_citation_graph_rerank(ranked_papers)
+
+        # 截取 Top-K
+        final_papers = final_ranked[:top_k]
+
+        # Debug 日志 (写入文件) - [更新] 包含 Hybrid 分数
         try:
             root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             debug_path = os.path.join(root_dir, "data", "papers_debug.txt")
@@ -179,7 +282,14 @@ class OpenAlexRetriever(BaseRetriever):
                 for p in final_papers:
                     status = "✅ PDF" if p.get('pdf_url') else "❌ No PDF"
                     score = p.get("_rerank_score", 0)
-                    f.write(f"[{status}] [Score:{score:.4f}] {p['title']}\nID: {p['id']}\nPDF: {p['pdf_url']}\n{'-'*30}\n")
+                    # [新增] 打印高级分数详情
+                    pr_s = p.get("_pagerank_score", None)
+                    hyb = p.get("_hybrid_score", None)
+                    extra = ""
+                    if pr_s is not None or hyb is not None:
+                        extra = f" [PR:{float(pr_s or 0):.6f}] [Hybrid:{float(hyb or 0):.6f}]"
+                    
+                    f.write(f"[{status}] [Score:{score:.4f}]{extra} {p['title']}\nID: {p['id']}\nPDF: {p['pdf_url']}\n{'-'*30}\n")
         except Exception:
             pass
 

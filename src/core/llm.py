@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import openai
 
@@ -50,22 +50,21 @@ class LLMService:
     def __init__(self):
         self.logger = setup_logger("LLMService")
         self.model = settings.LLM_MODEL_NAME
+        self.embedding_model = getattr(settings, "EMBEDDING_MODEL_NAME", "text-embedding-3-small")
 
-        # [新增] 优先检查 OpenRouter 配置 (队友逻辑)
-        # 使用 getattr 防止你的 settings.py 里没有定义这些变量而报错
+        # 初始化 Client (保持你原有的逻辑)
         openrouter_key = getattr(settings, "OPENROUTER_API_KEY", None)
         openrouter_base = getattr(settings, "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
         
         if openrouter_key:
-            self.logger.info(f"Initializing LLM via OpenRouter: {self.model}")
+            self.logger.info(f"Initializing LLM via OpenRouter")
             self.client = openai.OpenAI(
                 api_key=openrouter_key,
                 base_url=openrouter_base,
                 default_headers={"X-Title": "ScholarRAG"}
             )
         else:
-            # [原有] 默认 OpenAI/SiliconFlow 配置
-            self.logger.info(f"Initializing LLM via OpenAI-compatible: {self.model}")
+            self.logger.info(f"Initializing LLM via OpenAI-compatible")
             self.client = openai.OpenAI(
                 api_key=settings.OPENAI_API_KEY,
                 base_url=settings.OPENAI_BASE_URL
@@ -114,3 +113,51 @@ class LLMService:
         except Exception as e:
             self.logger.error(f"LLM JSON Call Failed: {str(e)}")
             return None
+        
+    def chat_stream(self, system_prompt: str, user_prompt: str):
+        """
+        [新增] 流式对话接口
+        返回一个生成器 (Generator)，逐个 token 产出
+        """
+        try:
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=settings.LLM_TEMPERATURE,
+                max_tokens=settings.LLM_MAX_TOKENS,
+                stream=True,  # <--- 保留这个
+                # stream_options={"include_usage": False}  <--- 🔴 [删除这一行] 这一行导致了 400 错误
+            )
+            
+            for chunk in stream:
+                if hasattr(chunk, 'choices') and chunk.choices:
+                    delta = chunk.choices[0].delta
+                    if hasattr(delta, 'content') and delta.content:
+                        yield delta.content
+
+        except Exception as e:
+            error_msg = f"\n[LLM Stream Failed: {str(e)}]"
+            self.logger.error(error_msg)
+            yield error_msg
+
+    def get_embedding(self, text: str) -> List[float]:
+        """
+        [新增] 获取文本的向量表示 (Embedding)
+        """
+        try:
+            # 移除换行符，避免影响 embedding 质量
+            text = text.replace("\n", " ")
+            
+            response = self.client.embeddings.create(
+                input=[text],
+                model=self.embedding_model
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            self.logger.error(f"Embedding Failed: {e}")
+            # 失败时返回零向量的替代方案或空列表，视下游处理而定
+            # 这里返回空列表让调用者处理
+            return []

@@ -96,7 +96,9 @@ def main():
     response = generator.generate(
         user_query=args.query, 
         context_data=detail_chunks, 
-        task_type=args.mode
+        task_type=args.mode,
+        language=args.lang, # 新增
+        papers_metadata=papers_metadata if args.mode == "review" else None # 新增
     )
 
     # 5. 输出

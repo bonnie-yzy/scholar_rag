@@ -257,6 +257,7 @@ class LocalVectorStore:
         
         papers_to_process = []
         for paper in papers_metadata:
+            # 简单检查去重
             existing = self.collection.get(where={"paper_id": paper['id']}, limit=1)
             if not existing['ids']:
                 papers_to_process.append(paper)
@@ -265,6 +266,7 @@ class LocalVectorStore:
             self.logger.info("All papers already indexed. Skipping.")
             return
 
+        # 1. 批量下载 PDF
         downloadable_papers = [p for p in papers_to_process if p.get('pdf_url')]
         download_map = {}
         if downloadable_papers:
@@ -275,52 +277,55 @@ class LocalVectorStore:
 
         new_count = 0
         
-        # 3. 混合入库逻辑
+        # 2. 混合处理 (PDF Full Text vs Abstract)
         for paper in tqdm(papers_to_process, desc="Indexing"):
             paper_id = paper['id']
             pdf_path = download_map.get(paper_id)
             
-            # --- 核心分支逻辑 ---
             text_content = ""
             is_full_text = False
             
-            # 分支 A: 尝试读取 PDF 全文
+            # A. 尝试 PDF
             if pdf_path:
                 parsed_text = self._parse_pdf(pdf_path)
                 if parsed_text and len(parsed_text) > 100:
                     text_content = parsed_text
                     is_full_text = True
             
-            # 分支 B: 兜底使用摘要 (如果 PDF 没下下来，或者解析为空)
+            # B. 兜底摘要
             if not text_content:
                 text_content = paper.get('abstract', '')
-                is_full_text = False # 标记为仅摘要
+                is_full_text = False
             
-            # 如果连摘要都没有，那就跳过
             if not text_content or len(text_content) < 10: 
                 continue
 
-            # 4. 切片与入库
+            # 3. 切片
             chunks = self._chunk_text(text_content)
             if not chunks: continue
 
             ids = [f"{paper_id}_chk_{i}" for i in range(len(chunks))]
+            
+            # [CRITICAL FIX] 强制清洗 Metadata，防止 None 进入 ChromaDB
             metadatas = [{
-                "paper_id": paper_id,
-                "title": paper['title'],
-                "url": paper.get('url', ''),
-                "pdf_url": paper.get('pdf_url', ''),
-                "year": paper['year'] or 0,
+                "paper_id": str(paper_id),
+                "title": str(paper.get('title') or "Unknown Title"),
+                "url": str(paper.get('url') or ""),        # 关键修改: None -> ""
+                "pdf_url": str(paper.get('pdf_url') or ""),# 关键修改: None -> ""
+                "year": int(paper.get('year') or 0),
                 "chunk_index": i,
-                "is_full_text": is_full_text  # <--- [新增] 关键标记
+                "is_full_text": bool(is_full_text)
             } for i in range(len(chunks))]
 
-            self.collection.add(
-                documents=chunks,
-                metadatas=metadatas,
-                ids=ids
-            )
-            new_count += len(chunks)
+            try:
+                self.collection.add(
+                    documents=chunks,
+                    metadatas=metadatas,
+                    ids=ids
+                )
+                new_count += len(chunks)
+            except Exception as e:
+                self.logger.error(f"Failed to add paper {paper_id}: {e}")
 
         if new_count > 0:
             self.logger.info(f"Success: Added {new_count} new chunks (Mixed Full/Abstract).")

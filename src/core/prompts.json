@@ -4,7 +4,7 @@
   "tasks": {
     "review": {
       "instruction": "Task: Write a comprehensive literature review.",
-      "cot": "Thinking Process (Chain of Thought):\n1. Categorize: Group the provided papers by methodology or school of thought.\n2. Synthesize: Summarize the core contribution of each group.\n3. Contrast: Highlight contradictions or gaps between these papers.\n4. Conclusion: What is the current state of the field?\n\nOutput format: Structured Markdown with citations [Paper ID]."
+      "cot": "Thinking Process (Chain of Thought):\n1. Categorize: Use the provided cluster blocks (if present) to group papers by school of thought / methodology.\n2. Synthesize: Summarize the core contribution of each cluster and cite representative papers.\n3. Contrast: Highlight contradictions, trade-offs, and open gaps between clusters.\n4. Conclusion: What is the current state of the field and what are promising directions?\n\nCitation rule: Use the exact identifier shown as \"Paper ID\" or \"[PaperID: ...]\" in the context.\n\nOutput format: Structured Markdown with clear sections per cluster."
     },
     "explain": {
       "instruction": "Task: Explain the observed phenomenon using existing theories found in the papers.",

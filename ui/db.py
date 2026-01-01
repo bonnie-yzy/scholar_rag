@@ -3,7 +3,7 @@ import sqlite3
 import hashlib
 import json
 from datetime import datetime
-
+import json, os
 DB_PATH = "data/scholar_ui.db"
 
 def init_db():
@@ -60,6 +60,113 @@ def init_db():
 def hash_pass(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+def seed_from_json(json_path="mock_data.json"):
+    if not os.path.exists(json_path):
+        return False, "mock_data.json not found"
+        
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        
+        # 1. 导入用户
+        for u in data.get("users", []):
+            try:
+                c.execute("INSERT OR IGNORE INTO users (username, password, created_at, bio, theme) VALUES (?, ?, ?, ?, ?)",
+                          (u['username'], hash_pass(u.get('password', '123')), datetime.now().isoformat(), u.get('bio'), u.get('theme')))
+            except: pass
+
+        # 2. 导入帖子并建立 ID 映射 (Mock ID -> Real DB ID)
+        # [CRITICAL] 必须建立映射，否则点赞数据无法关联
+        id_map = {} 
+        new_posts_count = 0
+        
+        for p in data.get("posts", []):
+            # 检查标题去重
+            c.execute("SELECT id FROM shared_chats WHERE title=?", (p['title'],))
+            existing = c.fetchone()
+            
+            if existing:
+                real_id = existing[0]
+            else:
+                # [NEW] 使用 json 里的 created_at，如果没有则用当前时间
+                p_time = p.get('created_at', datetime.now().isoformat())
+                
+                c.execute("INSERT INTO shared_chats (username, title, content, mode, likes, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                          (p['owner'], p['title'], p.get('content_json') or json.dumps(p), p['mode'], p.get('likes', 0), p_time))
+                real_id = c.lastrowid
+                new_posts_count += 1
+            
+            # 记录映射: json_id (e.g. 100) -> db_id (e.g. 1)
+            id_map[p['id']] = real_id
+
+        # 3. 导入点赞 (使用映射后的 ID)
+        new_likes_count = 0
+        for l in data.get("likes", []):
+            mock_pid = l['post_id']
+            real_pid = id_map.get(mock_pid) # 获取真实 ID
+            
+            if real_pid:
+                try:
+                    c.execute("INSERT OR IGNORE INTO post_likes (username, post_id, created_at) VALUES (?, ?, ?)", 
+                              (l['username'], real_pid, l.get('created_at', datetime.now().isoformat())))
+                    new_likes_count += 1
+                except: pass # 忽略重复点赞
+        
+        # 4. 强制修正 shared_chats 表里的 likes 计数
+        # 因为 mock 数据的 likes 计数可能和实际插入 post_likes 表的数量不一致（比如有些点赞因为重复被 ignore 了）
+        c.execute("""
+            UPDATE shared_chats 
+            SET likes = (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = shared_chats.id)
+        """)
+        
+        conn.commit()
+        conn.close()
+        return True, f"成功注入: {new_posts_count} 新帖子, {new_likes_count} 条点赞关联 (含时间戳)."
+    except Exception as e:
+        return False, str(e)
+
+def fetch_recommendation_data():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    
+    # 1. Users
+    c.execute("SELECT username, bio FROM users")
+    users = [dict(row) for row in c.fetchall()]
+    
+    # 2. Posts (关键修改：增加 username, likes, content)
+    c.execute("SELECT id, title, content, mode, username, likes FROM shared_chats")
+    posts_raw = c.fetchall()
+    posts = []
+    for row in posts_raw:
+        # 为了 content score 计算，我们需要 summary
+        summary = ""
+        try:
+            content_obj = json.loads(row['content'])
+            if isinstance(content_obj, dict):
+                summary = content_obj.get("summary", "")
+        except: pass
+        
+        posts.append({
+            "id": row['id'], 
+            "title": row['title'], 
+            "summary": summary,     # 供推荐算法计算相似度
+            "mode": row['mode'],
+            "owner": row['username'], # [新增] 供 UI 显示作者
+            "likes": row['likes'],    # [新增] 供 UI 显示点赞数
+            "content_raw": row['content'] # [新增] 供 UI 解析详情
+        })
+        
+    # 3. Likes
+    c.execute("SELECT username, post_id, created_at FROM post_likes")
+    likes = [dict(row) for row in c.fetchall()]
+    
+    conn.close()
+    return users, posts, likes
+
 def register_user(username, password):
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -110,7 +217,7 @@ def update_user_profile(username, bio=None, theme=None, font=None, avatar_bytes=
         
     conn.commit()
     conn.close()
-    
+
 # [新增] 保存私人历史
 def save_private_chat(username, summary, messages):
     if not messages: return
@@ -121,15 +228,21 @@ def save_private_chat(username, summary, messages):
     conn.commit()
     conn.close()
 
-# [新增] 获取用户的历史列表 (按时间倒序)
 def get_private_history_list(username):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+    # 查询了 4 个字段: id (0), summary (1), messages (2), updated_at (3)
     c.execute("SELECT id, summary, messages, updated_at FROM private_chats WHERE username=? ORDER BY updated_at DESC LIMIT 20", (username,))
     rows = c.fetchall()
     conn.close()
-    # 返回格式: [{"id":..., "summary":..., "msgs":...}]
-    return [{"id": r[0], "summary": r[1], "msgs": json.loads(r[2])} for r in rows]
+    
+    # 🔴 修复：这里必须要把 updated_at (索引3) 映射进去
+    return [{
+        "id": r[0], 
+        "summary": r[1], 
+        "msgs": json.loads(r[2]), 
+        "updated_at": r[3] 
+    } for r in rows]
 
 def share_chat_to_square(username, title, chat_history, mode):
     conn = sqlite3.connect(DB_PATH)
@@ -185,10 +298,17 @@ def share_chat_to_square(username, title, chat_history, mode):
     conn.commit()
     conn.close()
 
-def get_inspiration_posts():
+def get_inspiration_posts(sort_by="hot", limit=50):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT id, username, title, content, mode, likes FROM shared_chats ORDER BY likes DESC LIMIT 20")
+    
+    if sort_by == "new":
+        # 🆕 按时间倒序 (最新发布在最前)
+        c.execute("SELECT id, username, title, content, mode, likes FROM shared_chats ORDER BY created_at DESC LIMIT ?", (limit,))
+    else:
+        # 🔥 默认按热度 (点赞数倒序)
+        c.execute("SELECT id, username, title, content, mode, likes FROM shared_chats ORDER BY likes DESC LIMIT ?", (limit,))
+        
     posts = c.fetchall()
     conn.close()
     return posts

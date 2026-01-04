@@ -1,0 +1,2 @@
+# Evaluation module for ScholarRAG
+

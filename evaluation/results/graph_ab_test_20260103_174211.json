@@ -1,0 +1,989 @@
+{
+  "group_a_no_graph": [
+    {
+      "query": "transformer",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Transformer in Transformer",
+        "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows",
+        "Multimodal Learning With Transformers: A Survey",
+        "Restormer: Efficient Transformer for High-Resolution Image Restoration",
+        "Uformer: A General U-Shaped Transformer for Image Restoration",
+        "Efficient Transformers: A Survey",
+        "End-to-End Video Instance Segmentation with Transformers",
+        "Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting",
+        "Transformer Meets Tracker: Exploiting Temporal Context for Robust Visual Tracking",
+        "Are Transformers Effective for Time Series Forecasting?"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "attention",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A General Survey on Attention Mechanisms in Deep Learning",
+        "Attention mechanisms in computer vision: A survey",
+        "BiFormer: Vision Transformer with Bi-Level Routing Attention",
+        "Attention is all you need: utilizing attention in AI-enabled drug discovery",
+        "The multi-modal fusion in visual question answering: a review of attention mechanisms",
+        "Coordinate Attention for Efficient Mobile Network Design",
+        "Global Attention Mechanism: Retain Information to Enhance Channel-Spatial Interactions",
+        "Beyond Self-Attention: External Attention Using Two Linear Layers for Visual Tasks",
+        "Coordinate Attention for Efficient Mobile Network Design",
+        "Efficient Attention: Attention with Linear Complexities"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "reservoir computing",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "In-sensor reservoir computing for language learning via two-dimensional memristors",
+        "Quantum reservoir computing with a single nonlinear oscillator",
+        "Scalable reservoir computing on coherent linear photonic processor",
+        "Reservoir computing with biocompatible organic electrochemical networks for brain-inspired biosignal classification",
+        "Opportunities in Quantum Reservoir Computing and Extreme Learning Machines",
+        "Realising and compressing quantum circuits with quantum reservoir computing",
+        "Multilayer Reservoir Computing Based on Ferroelectric α‐In<sub>2</sub>Se<sub>3</sub> for Hierarchical Information Processing",
+        "In‐Materio Reservoir Computing in a Sulfonated Polyaniline Network",
+        "Parallel and deep reservoir computing using semiconductor lasers with optical feedback",
+        "Experimental realization of integrated photonic reservoir computing for nonlinear fiber distortion compensation"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "neural network",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A Survey of Convolutional Neural Networks: Analysis, Applications, and Prospects",
+        "Theoretical Understanding of Convolutional Neural Network: Concepts, Architectures, Applications, Future Directions",
+        "Scientific Machine Learning Through Physics–Informed Neural Networks: Where we are and What’s Next",
+        "A Survey of Quantization Methods for Efficient Neural Network Inference",
+        "Artificial Neural Networks Based Optimization Techniques: A Review",
+        "Dynamic Neural Networks: A Survey",
+        "Physics-Informed Neural Networks for Heat Transfer Problems",
+        "Spiking Neural Networks and Their Applications: A Review",
+        "Graph Neural Network-Based Anomaly Detection in Multivariate Time Series",
+        "Convolutional Neural Networks: A Survey"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "reinforcement learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Quantifying the Sim-To-Real Gap in UAV Disturbance Rejection",
+        "Transfer Learning in Deep Reinforcement Learning: A Survey",
+        "Deep Reinforcement Learning for Autonomous Driving: A Survey",
+        "Reinforcement Learning in Healthcare: A Survey",
+        "Off-Policy Deep Reinforcement Learning without Exploration",
+        "Reinforcement Learning for Sequential Decision and Optimal Control",
+        "A Review of Reinforcement Learning Based Intelligent Optimization for Manufacturing Scheduling",
+        "Deep Reinforcement Learning: A Survey",
+        "Data-Driven Performance-Prescribed Reinforcement Learning Control of an Unmanned Surface Vehicle",
+        "Model-based Reinforcement Learning: A Survey"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "graph neural network",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Graph Neural Networks in TensorFlow and Keras with Spektral [Application Notes]",
+        "Graph Neural Networks with Convolutional ARMA Filters",
+        "Higher-Order Explanations of Graph Neural Networks via Relevant Walks",
+        "Computing Graph Neural Networks: A Survey from Algorithms to Accelerators",
+        "Graph Neural Networks: Foundation, Frontiers and Applications",
+        "Graph Neural Networks in Network Neuroscience",
+        "Graph Neural Networks and Their Current Applications in Bioinformatics",
+        "Simple and Efficient Heterogeneous Graph Neural Network",
+        "Graph Neural Networks for Recommender System",
+        "Learning to Drop: Robust Graph Neural Network via Topological Denoising"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "convolutional neural network",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A Survey of Convolutional Neural Networks: Analysis, Applications, and Prospects",
+        "Convolutional Neural Networks",
+        "Theoretical Understanding of Convolutional Neural Network: Concepts, Architectures, Applications, Future Directions",
+        "Convolutional Neural Networks: A Survey",
+        "Understanding of Convolutional Neural Network (CNN): A Review",
+        "A Survey on Efficient Convolutional Neural Networks and Hardware Acceleration",
+        "Boosting Breast Cancer Detection Using Convolutional Neural Network",
+        "1D convolutional neural networks and applications: A survey",
+        "Review of Convolutional Neural Network",
+        "An Introduction to Convolutional Neural Networks"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "generative adversarial network",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Generative Adversarial Networks for Image and Video Synthesis: Algorithms and Applications",
+        "Generative Adversarial Networks (GANs)",
+        "Generative Adversarial Networks in Time Series: A Systematic Literature Review",
+        "Generative Adversarial Networks",
+        "Generative Adversarial Networks",
+        "Entangling Quantum Generative Adversarial Networks",
+        "A Review on Generative Adversarial Networks: Algorithms, Theory, and Applications",
+        "Generative Adversarial Networks for Spatio-temporal Data: A Survey",
+        "Generative Adversarial Networks in Computer Vision",
+        "PUFA-GAN: A Frequency-Aware Generative Adversarial Network for 3D Point Cloud Upsampling"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "variational autoencoder",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Variational Autoencoder for Speech Enhancement with a Noise-Aware Encoder",
+        "Variational Autoencoder for Image-Based Augmentation of Eye-Tracking Data",
+        "Dynamical Variational Autoencoders: A Comprehensive Review",
+        "Adversarial and Contrastive Variational Autoencoder for Sequential Recommendation",
+        "Dynamical Variational Autoencoders: A Comprehensive Review",
+        "An Overview of Variational Autoencoders for Source Separation, Finance, and Bio-Signal Applications",
+        "Variational autoencoders for new physics mining at the Large Hadron Collider",
+        "Visualizing population structure with variational autoencoders",
+        "Bilateral Variational Autoencoder for Collaborative Filtering",
+        "Explore Protein Conformational Space With Variational Autoencoder"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "long short-term memory",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Rainfall–runoff prediction at multiple timescales with a single Long Short-Term Memory network",
+        "Quantum Long Short-Term Memory",
+        "Benchmarking data-driven rainfall–runoff models in Great Britain: a comparison of long short-term memory (LSTM)-based models with four lumped conceptual models",
+        "Data science approach to stock prices forecasting in Indonesia during Covid-19 using Long Short-Term Memory (LSTM)",
+        "A survey on long short-term memory networks for time series prediction",
+        "Prediction of Daily Climate Using Long Short-Term Memory (LSTM) Model",
+        "Long Short-Term Memory Network-Based Metaheuristic for Effective Electric Energy Consumption Prediction",
+        "Suspended sediment load prediction using long short-term memory neural network",
+        "A comparative analysis of K-Nearest Neighbor, Genetic, Support Vector Machine, Decision Tree, and Long Short Term Memory algorithms in machine learning",
+        "Forecast of rainfall distribution based on fixed sliding window long short-term memory"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "self-attention",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "ELSA: Hardware-Software Co-design for Efficient, Lightweight Self-Attention Mechanism in Neural Networks",
+        "Beyond Self-attention: External Attention using Two Linear Layers for Visual Tasks",
+        "Beyond Self-Attention: External Attention Using Two Linear Layers for Visual Tasks",
+        "Slide-Transformer: Hierarchical Vision Transformer with Local Self-Attention",
+        "Focal Self-attention for Local-Global Interactions in Vision Transformers",
+        "Self-attention negative feedback network for real-time image super-resolution",
+        "Self-Attention ConvLSTM and Its Application in RUL Prediction of Rolling Bearings",
+        "Self-Attention Attribution: Interpreting Information Interactions Inside Transformer",
+        "On the Integration of Self-Attention and Convolution",
+        "Lighter and Better: Low-Rank Decomposed Self-Attention Networks for Next-Item Recommendation"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "few-shot learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "CrossFit: A Few-shot Learning Challenge for Cross-task Generalization in NLP",
+        "True Few-Shot Learning with Language Models",
+        "Deep Cross-Domain Few-Shot Learning for Hyperspectral Image Classification",
+        "Meta-Baseline: Exploring Simple Meta-Learning for Few-Shot Learning",
+        "Heterogeneous Few-Shot Learning for Hyperspectral Image Classification",
+        "Flamingo: a Visual Language Model for Few-Shot Learning",
+        "Reinforced Attention for Few-Shot Learning and Beyond",
+        "Pushing the Limits of Simple Pipelines for Few-Shot Learning: External Data and Fine-Tuning Make a Difference",
+        "Cutting Down on Prompts and Parameters: Simple Few-Shot Learning with Language Models",
+        "Meta-Learning with Task-Adaptive Loss Function for Few-Shot Learning"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "meta-learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A survey of deep meta-learning",
+        "Meta-Baseline: Exploring Simple Meta-Learning for Few-Shot Learning",
+        "Meta-Learning in Neural Networks: A Survey",
+        "Advances and Challenges in Meta-Learning: A Technical Review",
+        "Meta-learning Approaches for Few-Shot Learning: A Survey of Recent Advances",
+        "Progressive Meta-Learning With Curriculum",
+        "Meta-learning, social cognition and consciousness in brains and machines",
+        "Meta-Learning-Based Incremental Few-Shot Object Detection",
+        "Meta-Learning Based Hyperspectral Target Detection Using Siamese Network",
+        "Meta-Learning with Task-Adaptive Loss Function for Few-Shot Learning"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "transfer learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A Review of Deep Transfer Learning and Recent Advancements",
+        "Novel Transfer Learning Approach for Medical Imaging with Limited Labeled Data",
+        "Facial Emotion Recognition Using Transfer Learning in the Deep CNN",
+        "Deep Transfer Learning Approaches in Performance Analysis of Brain Tumor Classification Using MRI Images",
+        "Transfer Learning in Breast Cancer Diagnoses via Ultrasound Imaging",
+        "A comparison review of transfer learning and self-supervised learning: Definitions, applications, advantages and limitations",
+        "Transfer Learning in Deep Reinforcement Learning: A Survey",
+        "Subdomain Adaptation Transfer Learning Network for Fault Diagnosis of Roller Bearings",
+        "Transfer Learning Promotes 6G Wireless Communications: Recent Advances and Future Challenges",
+        "A Study of CNN and Transfer Learning in Medical Imaging: Advantages, Challenges, Future Scope"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "contrastive learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A simple framework for contrastive learning of visual representations",
+        "Dense Contrastive Learning for Self-Supervised Visual Pre-Training",
+        "Graph Contrastive Learning with Adaptive Augmentation",
+        "SimCSE: Simple Contrastive Learning of Sentence Embeddings",
+        "Contrastive Learning based Hybrid Networks for Long-Tailed Image Classification",
+        "Joint Generative and Contrastive Learning for Unsupervised Person Re-identification",
+        "Self-supervised Heterogeneous Graph Neural Network with Co-contrastive Learning",
+        "Improving Graph Collaborative Filtering with Neighborhood-enriched Contrastive Learning",
+        "Dual Contrastive Learning for General Face Forgery Detection",
+        "Dual Contrastive Learning for Unsupervised Image-to-Image Translation"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "adversarial training",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "On the Convergence and Robustness of Adversarial Training",
+        "Understanding Catastrophic Overfitting in Single-step Adversarial Training",
+        "Boosting Fast Adversarial Training With Learnable Adversarial Initialization",
+        "LAS-AT: Adversarial Training with Learnable Attack Strategy",
+        "Recent Advances in Adversarial Training for Adversarial Robustness",
+        "CAT: Customized Adversarial Training for Improved Robustness",
+        "Enhancing Adversarial Training with Second-Order Statistics of Weights",
+        "Analysis and Applications of Class-wise Robustness in Adversarial Training",
+        "Adversarial Training Methods for Deep Learning: A Systematic Review",
+        "Recent Advances in Adversarial Training for Adversarial Robustness"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "knowledge distillation",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Show, Attend and Distill: Knowledge Distillation via Attention-based Feature Matching",
+        "Online Knowledge Distillation for Efficient Pose Estimation",
+        "Towards Understanding Knowledge Distillation",
+        "Student Network Learning via Evolutionary Knowledge Distillation",
+        "Multilevel Attention-Based Sample Correlations for Knowledge Distillation",
+        "Adaptive Knowledge Distillation for Lightweight Remote Sensing Object Detectors Optimizing",
+        "Self-Knowledge Distillation with Progressive Refinement of Targets",
+        "Wavelet Knowledge Distillation: Towards Efficient Image-to-Image Translation",
+        "Refine Myself by Teaching Myself: Feature Refinement via Self-Knowledge Distillation",
+        "Data-free Knowledge Distillation for Object Detection"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "federated learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Federated Learning: Collaborative Machine Learning withoutCentralized Training Data",
+        "Model Pruning Enables Efficient Federated Learning on Edge Devices",
+        "A Survey on Federated Learning for Resource-Constrained IoT Devices",
+        "SecureBoost: A Lossless Federated Learning Framework",
+        "Communication-efficient federated learning",
+        "A Survey of Incentive Mechanism Design for Federated Learning",
+        "Model-Contrastive Federated Learning",
+        "Addressing Class Imbalance in Federated Learning",
+        "Federated Learning for Internet of Things: A Comprehensive Survey",
+        "A survey of federated learning for edge computing: Research problems and solutions"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "continual learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A continual learning survey: Defying forgetting in classification tasks",
+        "A Closer Look at Rehearsal-Free Continual Learning *",
+        "A Comprehensive Survey of Continual Learning: Theory, Method and Application",
+        "A Comprehensive Survey of Continual Learning: Theory, Method and Application",
+        "Rainbow Memory: Continual Learning with a Memory of Diverse Samples",
+        "Recent Advances of Continual Learning in Computer Vision: An Overview",
+        "Using Hindsight to Anchor Past Knowledge in Continual Learning",
+        "Continual Learning in Task-Oriented Dialogue Systems",
+        "PIVOT: Prompting for Video Continual Learning",
+        "Efficient Architecture Search for Continual Learning"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "multi-task learning",
+      "use_graph": false,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A Survey on Multi-Task Learning",
+        "Multi-Task Learning as Multi-Objective Optimization",
+        "Multi-Task Learning for Dense Prediction Tasks: A Survey",
+        "Distribution Matching for Heterogeneous Multi-Task Learning: a Large-scale Face Study",
+        "3D Multi-Attention Guided Multi-Task Learning Network for Automatic Gastric Tumor Segmentation and Lymph Node Classification",
+        "MmAP: Multi-Modal Alignment Prompt for Cross-Domain Multi-Task Learning",
+        "A Survey of Multi-task Learning in Natural Language Processing: Regarding Task Relatedness and Training Methods",
+        "Multi-Task Learning for Generalized Automatic Modulation Classification Under Non-Gaussian Noise With Varying SNR Conditions",
+        "Multi-Task Learning in Natural Language Processing: An Overview",
+        "A Fully Automated Multimodal MRI-Based Multi-Task Learning for Glioma Segmentation and IDH Genotyping"
+      ],
+      "concept_id": null
+    }
+  ],
+  "group_b_with_graph": [
+    {
+      "query": "transformer",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Transformer in Transformer",
+        "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows",
+        "Multimodal Learning With Transformers: A Survey",
+        "Restormer: Efficient Transformer for High-Resolution Image Restoration",
+        "Uformer: A General U-Shaped Transformer for Image Restoration",
+        "Efficient Transformers: A Survey",
+        "End-to-End Video Instance Segmentation with Transformers",
+        "Informer: Beyond Efficient Transformer for Long Sequence Time-Series Forecasting",
+        "Transformer Meets Tracker: Exploiting Temporal Context for Robust Visual Tracking",
+        "Are Transformers Effective for Time Series Forecasting?"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "attention",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Attention in Attention Network for Image Super-Resolution",
+        "Coordinate Attention for Efficient Mobile Network Design",
+        "Coordinate Attention for Efficient Mobile Network Design",
+        "Attention Deep Model With Multi-Scale Deep Supervision for Person Re-Identification",
+        "All the attention you need: Global-local, spatial-channel attention for image retrieval",
+        "Dual-Branch Attention-In-Attention Transformer for Single-Channel Speech Enhancement",
+        "Environment-Attention Network for Vehicle Trajectory Prediction",
+        "Rotate to Attend: Convolutional Triplet Attention Module",
+        "Distract Your Attention: Multi-Head Cross Attention Network for Facial Expression Recognition",
+        "KAN: Knowledge-aware Attention Network for Fake News Detection"
+      ],
+      "concept_id": "https://openalex.org/C2993807640"
+    },
+    {
+      "query": "reservoir computing",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Neural learning rules for generating flexible predictions and computing the successor representation",
+        "Introducing the Dendrify framework for incorporating dendrites to spiking neural networks",
+        "Connectivity concepts in neuronal network modeling",
+        "BiCoSS: Toward Large-Scale Cognition Brain With Multigranular Neuromorphic Architecture",
+        "Fast Simulations of Highly-Connected Spiking Cortical Models Using GPUs",
+        "CARLsim 6: An Open Source Library for Large-Scale, Biologically Detailed Spiking Neural Network Simulation",
+        "A review of non-cognitive applications for neuromorphic computing",
+        "Neuromorphic computing hardware and neural architectures for robotics",
+        "Artificial Neuronal Devices Based on Emerging Materials: Neuronal Dynamics and Applications",
+        "Likelihood approximation networks (LANs) for fast inference of simulation models in cognitive neuroscience"
+      ],
+      "concept_id": "https://openalex.org/C15286952"
+    },
+    {
+      "query": "neural network",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Highly accurate protein structure prediction with AlphaFold",
+        "1D convolutional neural networks and applications: A survey",
+        "",
+        "Understanding deep learning (still) requires rethinking generalization",
+        "On a Method to Measure Supervised Multiclass Model’s Interpretability: Application to Degradation Diagnosis (Short Paper)",
+        "MizAR 60 for Mizar 50",
+        "Deep Learning for Person Re-Identification: A Survey and Outlook",
+        "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift",
+        "Training language models to follow instructions with human feedback",
+        "Attention Is All You Need"
+      ],
+      "concept_id": "https://openalex.org/C119857082"
+    },
+    {
+      "query": "reinforcement learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Training language models to follow instructions with human feedback",
+        "A Survey on Multi-Task Learning",
+        "MizAR 60 for Mizar 50",
+        "",
+        "Towards Learning Terminological Concept Systems from Multilingual Natural Language Text",
+        "Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences",
+        "Attention Is All You Need",
+        "Exploring Simple Siamese Representation Learning",
+        "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift",
+        "UCF-101: A dataset of 101 human actions classes from videos in the wild"
+      ],
+      "concept_id": "https://openalex.org/C119857082"
+    },
+    {
+      "query": "graph neural network",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Learning trajectory dependencies for human motion prediction",
+        "A multi-head attention-based transformer model for traffic flow forecasting with a comparative analysis to recurrent neural networks",
+        "RNN-LSTM: From applications to modeling techniques and beyond—Systematic review",
+        "A Novel Cryptocurrency Price Prediction Model Using GRU, LSTM and bi-LSTM Machine Learning Algorithms",
+        "Recurrent Neural Networks: A Comprehensive Review of Architectures, Variants, and Applications",
+        "PredRNN: A Recurrent Neural Network for Spatiotemporal Predictive Learning",
+        "Bidirectional convolutional recurrent neural network architecture with group-wise enhancement mechanism for text sentiment classification",
+        "A Hybrid Prediction Method for Realistic Network Traffic With Temporal Convolutional Network and LSTM",
+        "Using RNN Artificial Neural Network to Predict the Occurrence of Gastric Cancer in the Future of the World",
+        "A Stacked GRU-RNN-Based Approach for Predicting Renewable Energy and Electricity Load for Smart Grid Operation"
+      ],
+      "concept_id": "https://openalex.org/C147168706"
+    },
+    {
+      "query": "convolutional neural network",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "1D convolutional neural networks and applications: A survey",
+        "Using Machine Learning to Identify Diseases and Perform Sorting in Apple Fruit",
+        "UNETR: Transformers for 3D Medical Image Segmentation",
+        "Swin-Unet: Unet-like Pure Transformer for Medical Image Segmentation",
+        "Deep learning-enabled medical computer vision",
+        "Understanding deep learning (still) requires rethinking generalization",
+        "ConvNeXt V2: Co-designing and Scaling ConvNets with Masked Autoencoders",
+        "ResNeSt: Split-Attention Networks",
+        "Learning Multiple Layers of Features from Tiny Images",
+        "Accurate prediction of protein structures and interactions using a three-track neural network"
+      ],
+      "concept_id": "https://openalex.org/C108583219"
+    },
+    {
+      "query": "generative adversarial network",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A Review on Generative Adversarial Networks: Algorithms, Theory, and Applications",
+        "Generative Adversarial Networks in Time Series: A Systematic Literature Review",
+        "Generative Adversarial Networks",
+        "Generative Adversarial Networks in Computer Vision",
+        "Generative Adversarial Networks",
+        "Ten years of generative adversarial nets (GANs): a survey of the state-of-the-art",
+        "Generative Adversarial Networks for Spatio-temporal Data: A Survey",
+        "FISS GAN: A Generative Adversarial Network for Foggy Image Semantic Segmentation",
+        "Future of generative adversarial networks (GAN) for anomaly detection in network security: A review",
+        "Generative Adversarial Networks for face generation: A survey"
+      ],
+      "concept_id": "https://openalex.org/C2988773926"
+    },
+    {
+      "query": "variational autoencoder",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Bilateral Variational Autoencoder for Collaborative Filtering",
+        "VAE-Based Interpretable Latent Variable Model for Process Monitoring",
+        "Uncertainty Inspired RGB-D Saliency Detection",
+        "The p factor is the sum of its parts, for now",
+        "A structural equation modeling approach for modeling variability as a latent variable.",
+        "Analyzing environmental‐trait interactions in ecological communities with fourth‐corner latent variable models",
+        "Self-Supervised Learning with Data Augmentations Provably Isolates\\n Content from Style",
+        "Latent variable and clustering methods in intersectionality research: systematic review of methods applications",
+        "Novel and familiar object recognition rely on the same ability.",
+        "Inference after latent variable estimation for single-cell RNA sequencing data"
+      ],
+      "concept_id": "https://openalex.org/C65965080"
+    },
+    {
+      "query": "long short-term memory",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Comparing LSTM and GRU Models to Predict the Condition of a Pulp Paper Press",
+        "A Short-Term Load Forecasting Method Using Integrated CNN and LSTM Network",
+        "Quantum Long Short-Term Memory",
+        "A survey on long short-term memory networks for time series prediction",
+        "Crop Yield Estimation Using Deep Learning Based on Climate Big Data and Irrigation Scheduling",
+        "Prediction of Daily Climate Using Long Short-Term Memory (LSTM) Model",
+        "Long short-term memory neural network (LSTM-NN) for aquifer level time series forecasting using in-situ piezometric observations",
+        "Comparing Long Short-Term Memory (LSTM) and bidirectional LSTM deep neural networks for power consumption prediction",
+        "Securing IoT and SDN systems using deep-learning based automatic intrusion detection",
+        "HDL-IDS: A Hybrid Deep Learning Architecture for Intrusion Detection in the Internet of Vehicles"
+      ],
+      "concept_id": "https://openalex.org/C133488467"
+    },
+    {
+      "query": "self-attention",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "ELSA: Hardware-Software Co-design for Efficient, Lightweight Self-Attention Mechanism in Neural Networks",
+        "Beyond Self-attention: External Attention using Two Linear Layers for Visual Tasks",
+        "Beyond Self-Attention: External Attention Using Two Linear Layers for Visual Tasks",
+        "Slide-Transformer: Hierarchical Vision Transformer with Local Self-Attention",
+        "Focal Self-attention for Local-Global Interactions in Vision Transformers",
+        "Self-attention negative feedback network for real-time image super-resolution",
+        "Self-Attention ConvLSTM and Its Application in RUL Prediction of Rolling Bearings",
+        "Self-Attention Attribution: Interpreting Information Interactions Inside Transformer",
+        "On the Integration of Self-Attention and Convolution",
+        "Lighter and Better: Low-Rank Decomposed Self-Attention Networks for Next-Item Recommendation"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "few-shot learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "CrossFit: A Few-shot Learning Challenge for Cross-task Generalization in NLP",
+        "True Few-Shot Learning with Language Models",
+        "Deep Cross-Domain Few-Shot Learning for Hyperspectral Image Classification",
+        "Meta-Baseline: Exploring Simple Meta-Learning for Few-Shot Learning",
+        "Heterogeneous Few-Shot Learning for Hyperspectral Image Classification",
+        "Flamingo: a Visual Language Model for Few-Shot Learning",
+        "Reinforced Attention for Few-Shot Learning and Beyond",
+        "Pushing the Limits of Simple Pipelines for Few-Shot Learning: External Data and Fine-Tuning Make a Difference",
+        "Cutting Down on Prompts and Parameters: Simple Few-Shot Learning with Language Models",
+        "Meta-Learning with Task-Adaptive Loss Function for Few-Shot Learning"
+      ],
+      "concept_id": null
+    },
+    {
+      "query": "meta-learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Meta-Learning with Task-Adaptive Loss Function for Few-Shot Learning",
+        "Task-Sequencing Meta Learning for Intelligent Few-Shot Fault Diagnosis With Limited Data",
+        "Incremental Object Detection via Meta-Learning",
+        "Meta-Learning in Neural Networks: A Survey",
+        "Meta-learning Approaches for Few-Shot Learning: A Survey of Recent Advances",
+        "Meta-Baseline: Exploring Simple Meta-Learning for Few-Shot Learning",
+        "A Meta-Learning Method for Electric Machine Bearing Fault Diagnosis Under Varying Working Conditions With Limited Data",
+        "Research on image classification method based on improved multi-scale relational network",
+        "MetaICL: Learning to Learn In Context",
+        "Consistent Meta-Regularization for Better Meta-Knowledge in Few-Shot Learning"
+      ],
+      "concept_id": "https://openalex.org/C2781002164"
+    },
+    {
+      "query": "transfer learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Deep Transfer Learning Approaches in Performance Analysis of Brain Tumor Classification Using MRI Images",
+        "Facial Emotion Recognition Using Transfer Learning in the Deep CNN",
+        "A Study of CNN and Transfer Learning in Medical Imaging: Advantages, Challenges, Future Scope",
+        "Transfer Learning in Deep Reinforcement Learning: A Survey",
+        "A Review of Deep Transfer Learning and Recent Advancements",
+        "A Novel Deep-Learning Model for Automatic Detection and Classification of Breast Cancer Using the Transfer-Learning Technique",
+        "Towards a Unified View of Parameter-Efficient Transfer Learning",
+        "Seasonal Contrast: Unsupervised Pre-Training from Uncurated Remote Sensing Data",
+        "Fruit Image Classification Model Based on MobileNetV2 with Deep Transfer Learning Technique",
+        "A Novel Deep Learning Model for Detection of Severity Level of the Disease in Citrus Fruits"
+      ],
+      "concept_id": "https://openalex.org/C150899416"
+    },
+    {
+      "query": "contrastive learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A simple framework for contrastive learning of visual representations",
+        "SimCSE: Simple Contrastive Learning of Sentence Embeddings",
+        "Anomaly Detection on Attributed Networks via Contrastive Self-Supervised Learning",
+        "Graph Contrastive Learning with Adaptive Augmentation",
+        "Intent Contrastive Learning for Sequential Recommendation",
+        "Propagate Yourself: Exploring Pixel-Level Consistency for Unsupervised Visual Representation Learning",
+        "Multi-level Feature Learning for Contrastive Multi-view Clustering",
+        "Contrastive Learning for Representation Degeneration Problem in Sequential Recommendation",
+        "Spatiotemporal Contrastive Video Representation Learning",
+        "COMPLETER: Incomplete Multi-view Clustering via Contrastive Prediction"
+      ],
+      "concept_id": "https://openalex.org/C59404180"
+    },
+    {
+      "query": "adversarial training",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "On Assessing ML Model Robustness: A Methodological Framework (Academic Track)",
+        "MizAR 60 for Mizar 50",
+        "",
+        "Towards Learning Terminological Concept Systems from Multilingual Natural Language Text",
+        "Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences",
+        "Attention Is All You Need",
+        "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift",
+        "Xlnet: Generalized Autoregressive Pretraining for Language Understanding",
+        "Exploring Simple Siamese Representation Learning",
+        "Emerging Properties in Self-Supervised Vision Transformers"
+      ],
+      "concept_id": "https://openalex.org/C119857082"
+    },
+    {
+      "query": "knowledge distillation",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 14,
+      "top_10_titles": [
+        "Characterization and Impact of Waste Plastic Oil in a Variable Compression Ratio Diesel Engine",
+        "Applied Intelligent Grey Wolf Optimizer (IGWO) to Improve the Performance of CI Engine Running on Emulsion Diesel Fuel Blends",
+        "Modeling and Optimization of a Compression Ignition Engine Fueled with Biodiesel Blends for Performance Improvement",
+        "Gasoline compression ignition (GCI) combustion of pump-grade gasoline fuel under high compression ratio diesel engine",
+        "Influences of hydrogen addition from different dual‐fuel modes on engine behaviors",
+        "Ignition Sensitivity Analysis for Energy-Assisted Compression-Ignition Operation on Jet Fuels with Varying Cetane Number",
+        "Effects of Different Diesel-Ethanol Dual Fuel Ratio on Performance and Emission Characteristics of Diesel Engine",
+        "Hydrogen-diesel dual-fuel direct-injection (H2DDI) combustion under compression-ignition engine conditions",
+        "Experimental investigation on treated transformer oil (TTO) and its diesel blends in the diesel engine",
+        "Alcohols as alternative fuels in compression ignition engines for sustainable transportation: a review"
+      ],
+      "concept_id": "https://openalex.org/C132927557"
+    },
+    {
+      "query": "federated learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Model-Contrastive Federated Learning",
+        "Federated Learning: Collaborative Machine Learning withoutCentralized Training Data",
+        "A Survey on Federated Learning Systems: Vision, Hype and Reality for Data Privacy and Protection",
+        "FedBN: Federated Learning on Non-IID Features via Local Batch Normalization",
+        "A Field Guide to Federated Optimization",
+        "Personalized Cross-Silo Federated Learning on Non-IID Data",
+        "Anonymous and Privacy-Preserving Federated Learning With Industrial Big Data",
+        "FLTrust: Byzantine-robust Federated Learning via Trust Bootstrapping",
+        "Federated Learning in a Medical Context: A Systematic Literature Review",
+        "SplitFed: When Federated Learning Meets Split Learning"
+      ],
+      "concept_id": "https://openalex.org/C2992525071"
+    },
+    {
+      "query": "continual learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "Continuance Intention of University Students and Online Learning during the COVID-19 Pandemic: A Modified Expectation Confirmation Model Perspective",
+        "Pillars of online pedagogy: A framework for teaching in online learning environments",
+        "Teaching and Learning in the Time of COVID: The Student Perspective",
+        "Students’ perception of online learning during the COVID-19 pandemic",
+        "Social interaction and effectiveness of the online learning – A moderating role of maintaining social distance during the pandemic COVID-19",
+        "Jordanian University Students’ Views on Emergency Online Learning During COVID-19",
+        "Foundations of online learning: Challenges and opportunities",
+        "Design-based research: What it is and why it matters to studying online learning",
+        "Students’ experience of online learning during the COVID‐19 pandemic: A province‐wide survey study",
+        "Synthesizing research evidence on self-regulated learning and academic achievement in online and blended learning environments: A scoping review"
+      ],
+      "concept_id": "https://openalex.org/C2986087404"
+    },
+    {
+      "query": "multi-task learning",
+      "use_graph": true,
+      "hit_rate": 1.0,
+      "noise_rate": 0.0,
+      "papers_count": 20,
+      "top_10_titles": [
+        "A Survey on Multi-Task Learning",
+        "Multi-Task Learning as Multi-Objective Optimization",
+        "Multitask Genetic Programming-Based Generative Hyperheuristics: A Case Study in Dynamic Scheduling",
+        "Distribution Matching for Heterogeneous Multi-Task Learning: a Large-scale Face Study",
+        "The Stem Cell Hypothesis: Dilemma behind Multi-Task Learning with Transformer Encoders",
+        "Multi-Task Learning for Dense Prediction Tasks: A Survey",
+        "Improving cancer driver gene identification using multi-task learning on graph convolutional network",
+        "One model is all you need: Multi-task learning enables simultaneous histology image segmentation and classification",
+        "3D Multi-Attention Guided Multi-Task Learning Network for Automatic Gastric Tumor Segmentation and Lymph Node Classification",
+        "GMSS: Graph-Based Multi-Task Self-Supervised Learning for EEG Emotion Recognition"
+      ],
+      "concept_id": "https://openalex.org/C28006648"
+    }
+  ],
+  "comparison": [
+    {
+      "query": "transformer",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "attention",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "reservoir computing",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "neural network",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "reinforcement learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "graph neural network",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "convolutional neural network",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "generative adversarial network",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "variational autoencoder",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "long short-term memory",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "self-attention",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "few-shot learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "meta-learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "transfer learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "contrastive learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "adversarial training",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "knowledge distillation",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "federated learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "continual learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    },
+    {
+      "query": "multi-task learning",
+      "hit_rate_improvement": 0.0,
+      "noise_rate_reduction": 0.0,
+      "group_a_hit_rate": 1.0,
+      "group_b_hit_rate": 1.0,
+      "group_a_noise_rate": 0.0,
+      "group_b_noise_rate": 0.0
+    }
+  ],
+  "timestamp": "2026-01-03T17:39:31.020118"
+}

@@ -9,4 +9,11 @@ chromadb
 pymupdf 
 sentence-transformers 
 tqdm 
-streamlit
+chainlit
+aiohttp
+# 评测相关依赖
+ragas
+datasets
+matplotlib
+seaborn
+openpyxl
